@@ -1,0 +1,2664 @@
+<!DOCTYPE html>
+<!--
+  AERO GLIDE · 3D product showcase — single-file build (HTML + CSS + JS, three.js r187 from jsDelivr).
+  Serve this folder over HTTP and keep the model next to this file as ./shoe.glb.
+  Bundled demo model: "Materials Variants Shoe" © 2021 Shopify, Inc. — CC BY 4.0
+  (https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#04050a" />
+<meta name="color-scheme" content="dark" />
+<title>AERO GLIDE — Precision Knit Performance Runner | AERO Atelier</title>
+<meta name="description" content="AERO GLIDE: a limited-run performance runner rendered in real time. 212 g engineered knit upper, AeroFoam midsole, 8 mm drop. Reserve your pair from the first drop of 500." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="AERO GLIDE — 3D Sneaker Showcase" />
+<meta property="og:description" content="Interactive real-time 3D product showcase. Drag to rotate, switch colorways, pre-order the limited drop." />
+<meta name="robots" content="index,follow" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2306070d'/%3E%3Cpath d='M5 21.5c4.2 1.4 8-1.1 11-3.6 2.4-2 4.6-3.6 7.2-3.1 1.9.4 3 1.7 3.4 3.2-3.9-1.6-6.6.6-9.4 2.8-2.9 2.3-6.6 4.2-12.2.7Z' fill='%235ea8ff'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+
+<!-- three.js r187 import map — must precede every module fetch, including the preloads below -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"
+  }
+}
+</script>
+<!-- Flatten the module waterfall: fetch the whole graph in parallel with the HTML parse -->
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js" />
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.core.js" />
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/loaders/GLTFLoader.js" />
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/utils/BufferGeometryUtils.js" />
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/utils/SkeletonUtils.js" />
+<!-- Start the product download immediately; the streamed fetch() in the app reuses this request -->
+<link rel="preload" href="shoe.glb" as="fetch" crossorigin />
+
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,90..112,400..900&family=Manrope:wght@300..800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================================
+   AERO GLIDE — design tokens
+   ========================================================================== */
+:root{
+  --bg-0:#04050a;
+  --bg-1:#0a0c15;
+  --ink:#f1f4fb;
+  --ink-2:rgba(241,244,251,.70);
+  --ink-3:rgba(241,244,251,.44);
+  --ink-4:rgba(241,244,251,.22);
+  --line:rgba(255,255,255,.10);
+  --line-2:rgba(255,255,255,.18);
+  --glass:rgba(18,22,34,.42);
+  --glass-hi:rgba(255,255,255,.075);
+  --glass-lo:rgba(255,255,255,.022);
+  --accent:#5ea8ff;
+  --accent-2:#a9d3ff;
+  --accent-soft:rgba(94,168,255,.16);
+  --on-accent:#04101f;
+  --ok:#5ef2b0;
+  --r-xl:28px; --r-lg:22px; --r-md:16px; --r-sm:11px;
+  --blur:20px;
+  --pad:clamp(15px,2.1vw,26px);
+  --shadow-lg:0 40px 90px -40px rgba(0,0,0,.95), 0 4px 18px -6px rgba(0,0,0,.6);
+  --shadow-sm:0 14px 34px -18px rgba(0,0,0,.9);
+  --font-d:'Archivo','Archivo Expanded',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,sans-serif;
+  --font-b:'Manrope',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,sans-serif;
+  --font-m:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --e-out:cubic-bezier(.16,1,.3,1);
+  --e-soft:cubic-bezier(.22,.61,.36,1);
+  --e-in-out:cubic-bezier(.65,.05,.36,1);
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg-0);
+  color:var(--ink);
+  font-family:var(--font-b);
+  font-size:15px;
+  line-height:1.55;
+  font-weight:400;
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+}
+img,svg{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;margin:0;padding:0;cursor:pointer}
+h1,h2,h3,p,figure{margin:0}
+ul{margin:0;padding:0;list-style:none}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+::selection{background:var(--accent);color:var(--on-accent)}
+
+/* ============================================================================
+   Layered background (behind the WebGL canvas)
+   ========================================================================== */
+.backdrop{position:fixed;inset:0;z-index:0;background:
+  radial-gradient(120% 85% at 50% -10%, #161d31 0%, #0a0d18 42%, #04050a 78%),
+  linear-gradient(180deg,#06070e 0%,#04050a 100%);}
+.backdrop::after{content:"";position:absolute;inset:-24px;
+  background:radial-gradient(58% 42% at 66% 62%, var(--accent-soft) 0%, transparent 70%);
+  opacity:.85;transition:background 900ms var(--e-soft);
+  transform:translate3d(calc(var(--mx,0) * -22px),calc(var(--my,0) * 14px),0);will-change:transform}
+
+/* Atmospheric veils drawn over the canvas */
+.veil{position:fixed;inset:0;z-index:2;pointer-events:none}
+.veil--vignette{background:
+  radial-gradient(105% 78% at 50% 46%, transparent 38%, rgba(2,3,7,.55) 82%, rgba(2,3,7,.9) 100%),
+  linear-gradient(180deg, rgba(3,4,9,.72) 0%, transparent 22%, transparent 62%, rgba(3,4,9,.86) 100%);}
+.veil--grain{opacity:.30;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");}
+.veil--scan{opacity:.16;background:repeating-linear-gradient(180deg,rgba(255,255,255,.055) 0 1px,transparent 1px 3px)}
+
+/* ============================================================================
+   Canvas
+   ========================================================================== */
+#stage{position:fixed;inset:0;z-index:1;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#stage.is-dragging{cursor:grabbing}
+#stage:focus-visible{outline:none}
+#stage:focus-visible::after{content:""}
+
+/* ============================================================================
+   Glass primitives
+   ========================================================================== */
+.glass{
+  position:relative;
+  background:linear-gradient(157deg,var(--glass-hi) 0%,var(--glass-lo) 46%,rgba(255,255,255,.012) 100%),var(--glass);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(155%);
+  backdrop-filter:blur(var(--blur)) saturate(155%);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(0,0,0,.35);
+  border-radius:var(--r-lg);
+}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),transparent 26%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;opacity:.55}
+body.reduce-fx .glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(10,13,22,.86)}
+
+/* ============================================================================
+   UI scaffolding
+   ========================================================================== */
+.ui{position:fixed;inset:0;z-index:4;pointer-events:none;display:flex;flex-direction:column;
+  padding:calc(var(--pad) + var(--safe-t)) var(--pad) calc(var(--pad) + var(--safe-b));
+  gap:var(--pad)}
+.ui > *{pointer-events:auto}
+
+/* reveal choreography ----------------------------------------------------- */
+[data-reveal]{opacity:0;transform:translate3d(0,20px,0);
+  transition:opacity 900ms var(--e-out),transform 1000ms var(--e-out);
+  transition-delay:var(--d,0ms)}
+body.is-ready [data-reveal]{opacity:1;transform:none}
+
+/* ============================================================================
+   Top bar
+   ========================================================================== */
+.topbar{display:flex;align-items:center;gap:clamp(10px,1.6vw,22px);
+  padding:10px 12px 10px 14px;border-radius:999px;--blur:16px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand__mark{width:34px;height:34px;flex:0 0 auto;border-radius:11px;display:grid;place-items:center;
+  background:radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,.20), rgba(255,255,255,.03));
+  border:1px solid var(--line-2);box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 6px 18px -8px rgba(0,0,0,.9)}
+.brand__mark svg{width:20px;height:20px}
+.brand__txt{display:flex;flex-direction:column;line-height:1;min-width:0}
+.brand__name{font-family:var(--font-d);font-weight:800;font-size:16px;letter-spacing:.16em;
+  font-variation-settings:'wdth' 108}
+.brand__sub{font-family:var(--font-m);font-size:9px;letter-spacing:.26em;color:var(--ink-3);margin-top:4px;text-transform:uppercase}
+
+.segbar{display:flex;gap:3px;margin-left:auto;padding:3px;border-radius:999px;
+  background:rgba(255,255,255,.035);border:1px solid var(--line)}
+.segbar button{position:relative;padding:8px 15px;border-radius:999px;font-size:12px;font-weight:600;
+  letter-spacing:.02em;color:var(--ink-3);transition:color 320ms var(--e-soft)}
+.segbar button[aria-selected="true"]{color:var(--on-accent)}
+.segbar__thumb{position:absolute;top:3px;left:3px;height:calc(100% - 6px);border-radius:999px;
+  background:linear-gradient(135deg,var(--accent-2),var(--accent));
+  box-shadow:0 6px 18px -6px var(--accent);z-index:-1;
+  transition:transform 520ms var(--e-out),width 520ms var(--e-out),background 600ms linear}
+.segbar{position:relative;isolation:isolate}
+
+.topbar__right{display:flex;align-items:center;gap:9px;margin-left:auto}
+.segbar + .topbar__right{margin-left:0}
+
+.chip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;
+  border:1px solid var(--line);background:rgba(255,255,255,.035);
+  font-family:var(--font-m);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2);
+  white-space:nowrap;transition:border-color 300ms,background 300ms,color 300ms}
+.chip b{color:var(--ink);font-weight:700}
+.chip__dot{width:6px;height:6px;border-radius:50%;background:var(--ok);
+  box-shadow:0 0 0 0 rgba(94,242,176,.6);animation:pulse 2.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(94,242,176,.55)}70%{box-shadow:0 0 0 8px rgba(94,242,176,0)}100%{box-shadow:0 0 0 0 rgba(94,242,176,0)}}
+
+.iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--ink-2);
+  transition:transform 380ms var(--e-out),color 260ms,border-color 260ms,background 260ms}
+.iconbtn svg{width:17px;height:17px}
+.iconbtn:hover{color:var(--ink);border-color:var(--line-2);background:rgba(255,255,255,.08);transform:translateY(-1px)}
+.iconbtn:active{transform:translateY(0) scale(.94)}
+.iconbtn[aria-pressed="true"]{color:var(--on-accent);background:linear-gradient(135deg,var(--accent-2),var(--accent));border-color:transparent}
+.iconbtn.is-spin svg{animation:spin 2.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================================================================
+   Stage / hero layout
+   ========================================================================== */
+.stagegrid{flex:1;min-height:0;display:grid;gap:var(--pad);
+  grid-template-columns:minmax(300px,25.5vw) 1fr;
+  grid-template-rows:1fr auto;
+  grid-template-areas:"hero rail" "dock dock";
+  pointer-events:none}                       /* empty grid cells let drags reach the canvas */
+.stagegrid > *{pointer-events:auto}
+
+/* --- Hero card ------------------------------------------------------------ */
+.hero{grid-area:hero;align-self:start;display:flex;flex-direction:column;gap:clamp(13px,1.5vw,19px);
+  padding:clamp(20px,2.1vw,30px);max-width:460px;overflow:hidden}
+.hero::after{content:"";position:absolute;left:-40%;top:-60%;width:80%;height:220%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
+  transform:rotate(14deg) translateX(-140%);transition:transform 1200ms var(--e-out)}
+.hero:hover::after{transform:rotate(14deg) translateX(320%)}
+
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-m);
+  font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3)}
+.eyebrow__gem{width:7px;height:7px;transform:rotate(45deg);border-radius:2px;
+  background:linear-gradient(135deg,var(--accent-2),var(--accent));box-shadow:0 0 12px var(--accent)}
+
+.title{font-family:var(--font-d);font-weight:900;line-height:.84;letter-spacing:-.035em;
+  font-size:clamp(3.1rem,7.4vw,6.4rem);margin:-.06em 0 -.12em;
+  font-variation-settings:'wdth' 112;display:flex;flex-direction:column;text-transform:uppercase}
+.title span{display:block}
+.title .l1{background:linear-gradient(178deg,#ffffff 12%,#c8d3e6 58%,#7f8ca6 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 10px 26px rgba(0,0,0,.55))}
+.title .l2{position:relative;color:transparent;-webkit-text-stroke:1.6px rgba(241,244,251,.62);
+  margin-left:.045em;transition:-webkit-text-stroke-color 500ms}
+.title .l2::after{content:"GLIDE";position:absolute;inset:0;color:transparent;
+  -webkit-text-stroke:1.6px var(--accent);opacity:0;transition:opacity 600ms var(--e-soft)}
+.hero:hover .title .l2::after{opacity:.9}
+
+.lede{color:var(--ink-2);font-size:clamp(13.5px,1.02vw,15px);line-height:1.68;max-width:40ch;font-weight:400}
+.lede strong{color:var(--ink);font-weight:650}
+
+/* --- Price tag ------------------------------------------------------------ */
+.pricewrap{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.price{position:relative;display:flex;align-items:baseline;gap:2px;padding:11px 20px 12px;
+  border-radius:var(--r-md);border:1px solid var(--line-2);overflow:hidden;
+  background:linear-gradient(140deg,rgba(255,255,255,.10),rgba(255,255,255,.02));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 16px 34px -20px rgba(0,0,0,.95)}
+.price::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.16) 46%,transparent 62%);
+  transform:translateX(-120%);animation:sheen 5.4s var(--e-in-out) 1.6s infinite}
+@keyframes sheen{0%{transform:translateX(-120%)}42%,100%{transform:translateX(220%)}}
+.price__cur{font-family:var(--font-d);font-size:17px;font-weight:700;color:var(--accent-2);transform:translateY(-9px);margin-right:2px}
+.price__val{font-family:var(--font-d);font-size:clamp(28px,2.6vw,36px);font-weight:800;letter-spacing:-.03em;
+  font-variation-settings:'wdth' 106;font-variant-numeric:tabular-nums}
+.price__cents{font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--ink-2);transform:translateY(-8px)}
+.price__tag{position:absolute;top:-1px;right:-1px;font-family:var(--font-m);font-size:8.5px;font-weight:700;
+  letter-spacing:.14em;padding:3px 7px;border-radius:0 var(--r-md) 0 9px;color:var(--on-accent);
+  background:linear-gradient(135deg,var(--accent-2),var(--accent))}
+.pricemeta{display:flex;flex-direction:column;gap:3px}
+.pricemeta__was{font-family:var(--font-m);font-size:11px;color:var(--ink-3);letter-spacing:.06em}
+.pricemeta__was s{opacity:.85}
+.pricemeta__plan{font-size:11.5px;color:var(--ink-2);letter-spacing:.01em}
+.pricemeta__plan b{color:var(--ink);font-weight:650}
+
+/* --- Buttons -------------------------------------------------------------- */
+.actions{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:2px}
+.actions .btn{flex:1 1 auto}                 /* share a row, or go full-width once wrapped */
+.btn--ghost[aria-expanded="true"]{border-color:var(--accent);color:var(--accent);
+  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.03))}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  height:54px;padding:0 26px;border-radius:999px;overflow:hidden;isolation:isolate;
+  font-family:var(--font-d);font-size:13.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  font-variation-settings:'wdth' 104;
+  transition:transform 420ms var(--e-out),box-shadow 420ms var(--e-out),color 300ms,letter-spacing 420ms var(--e-out)}
+.btn--primary{color:var(--on-accent);
+  background:linear-gradient(120deg,var(--accent-2) 0%,var(--accent) 52%,var(--accent-2) 100%);
+  background-size:220% 100%;background-position:0% 0;
+  box-shadow:0 18px 40px -18px var(--accent),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -14px 22px -18px rgba(0,0,0,.7)}
+.btn--primary::before{content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(120deg,var(--accent) 0%,#ffffff 50%,var(--accent) 100%);
+  background-size:220% 100%;opacity:0;transition:opacity 380ms var(--e-soft)}
+.btn--primary{transform:translate3d(var(--mx,0px),var(--my,0px),0)}
+.btn--primary::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(130px circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.62),transparent 62%);
+  mix-blend-mode:soft-light;opacity:0;transition:opacity 320ms var(--e-soft)}
+.btn--primary:hover{transform:translate3d(var(--mx,0px),calc(var(--my,0px) - 3px),0) scale(1.014);letter-spacing:.16em;
+  box-shadow:0 26px 54px -18px var(--accent),0 0 0 1px rgba(255,255,255,.22) inset,0 0 34px -6px var(--accent-soft)}
+.btn--primary:hover::before{opacity:1;animation:bgslide 1.5s var(--e-in-out) infinite}
+.btn--primary:hover::after{opacity:1}
+@keyframes bgslide{0%{background-position:0% 0}100%{background-position:220% 0}}
+.btn--primary:active{transform:translate3d(var(--mx,0px),calc(var(--my,0px) - 1px),0) scale(.988)}
+.btn__arrow{display:inline-flex;transition:transform 420ms var(--e-out)}
+.btn:hover .btn__arrow{transform:translateX(5px)}
+.btn__arrow svg{width:16px;height:16px}
+.btn.is-done{background:linear-gradient(120deg,#4ce0a4,#2bb98a);color:#04140e;letter-spacing:.11em;
+  box-shadow:0 18px 40px -18px #2bb98a,inset 0 1px 0 rgba(255,255,255,.5)}
+.btn--primary.is-done::before,.btn--primary.is-done::after{display:none}
+.btn--primary.is-done:hover{letter-spacing:.12em;box-shadow:0 22px 46px -18px #2bb98a,inset 0 1px 0 rgba(255,255,255,.5)}
+.btn.is-busy{pointer-events:none}
+.btn.is-busy .btn__label{opacity:.35}
+.btn__spinner{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:opacity 220ms}
+.btn.is-busy .btn__spinner{opacity:1}
+.btn__spinner i{width:19px;height:19px;border-radius:50%;border:2px solid rgba(0,0,0,.25);border-top-color:currentColor;
+  animation:spin .72s linear infinite}
+
+.btn--ghost{height:54px;padding:0 22px;border:1px solid var(--line-2);color:var(--ink);
+  background:rgba(255,255,255,.03);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.btn--ghost:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.3);transform:translateY(-2px)}
+
+.assure{display:flex;flex-wrap:wrap;gap:7px 16px;padding-top:4px;border-top:1px solid var(--line);margin-top:2px}
+.assure li{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-3);letter-spacing:.02em;padding-top:12px}
+.assure svg{width:13px;height:13px;color:var(--accent);flex:0 0 auto}
+
+/* ============================================================================
+   Spec rail
+   ========================================================================== */
+.rail{grid-area:rail;align-self:start;justify-self:end;width:min(292px,26vw);
+  padding:clamp(16px,1.5vw,22px);display:flex;flex-direction:column;gap:15px;
+  transition:transform 700ms var(--e-out),opacity 500ms var(--e-out),box-shadow 500ms}
+.rail__head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rail__title{font-family:var(--font-d);font-size:12.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+  font-variation-settings:'wdth' 104}
+.rail__badge{font-family:var(--font-m);font-size:9px;letter-spacing:.16em;color:var(--ink-3);
+  border:1px solid var(--line);border-radius:999px;padding:3px 8px;text-transform:uppercase}
+.spec{display:grid;grid-template-columns:1fr auto;gap:5px 10px;align-items:baseline;
+  padding:11px 0;border-top:1px solid var(--line)}
+.spec:first-of-type{border-top:0;padding-top:2px}
+.spec__k{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-family:var(--font-m)}
+.spec__v{font-family:var(--font-d);font-size:15px;font-weight:750;letter-spacing:-.01em;text-align:right;
+  font-variation-settings:'wdth' 102;font-variant-numeric:tabular-nums}
+.spec__bar{grid-column:1/-1;height:3px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:5px}
+.spec__bar i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  box-shadow:0 0 12px -1px var(--accent);transition:width 1300ms var(--e-out)}
+body.is-ready .spec__bar i{width:var(--w,50%)}
+.rail__foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;border-top:1px solid var(--line);
+  font-size:11px;color:var(--ink-3)}
+.sizes{display:flex;gap:4px}
+.sizes button{width:29px;height:26px;border-radius:8px;border:1px solid var(--line);font-family:var(--font-m);
+  font-size:10px;color:var(--ink-3);transition:all 260ms var(--e-soft)}
+.sizes button:hover{color:var(--ink);border-color:var(--line-2);background:rgba(255,255,255,.06)}
+.sizes button[aria-pressed="true"]{color:var(--on-accent);background:linear-gradient(135deg,var(--accent-2),var(--accent));border-color:transparent}
+
+body[data-view="tech"] .rail{transform:scale(1.035);box-shadow:var(--shadow-lg),0 0 0 1px var(--accent-soft),0 0 60px -22px var(--accent)}
+body[data-view="overview"] .rail{opacity:.62}
+body[data-view="overview"] .rail:hover{opacity:1}
+
+/* ============================================================================
+   Dock — colorways + transport controls
+   ========================================================================== */
+.dock{grid-area:dock;justify-self:center;display:flex;align-items:center;gap:clamp(10px,1.4vw,18px);
+  padding:11px 14px;border-radius:999px;--blur:18px;max-width:100%;
+  transition:transform 620ms var(--e-out),box-shadow 500ms}
+body[data-view="color"] .dock{transform:translateY(-4px) scale(1.02);
+  box-shadow:var(--shadow-lg),0 0 0 1px var(--accent-soft),0 0 70px -26px var(--accent)}
+.dock__label{font-family:var(--font-m);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);
+  padding-left:6px;white-space:nowrap}
+.colorways{display:flex;gap:8px;align-items:center}
+.sw{position:relative;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid var(--line);transition:transform 400ms var(--e-out),border-color 300ms,background 300ms}
+.sw::after{content:"";width:22px;height:22px;border-radius:50%;background:var(--c,#888);
+  box-shadow:inset 0 -5px 9px rgba(0,0,0,.45),inset 0 3px 6px rgba(255,255,255,.32),0 4px 12px -4px var(--cs,#888);
+  transition:transform 400ms var(--e-out)}
+.sw:hover{transform:translateY(-2px);border-color:var(--line-2)}
+.sw:hover::after{transform:scale(1.09)}
+.sw[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.sw[aria-pressed="true"]::after{transform:scale(1.12)}
+.sw__name{position:absolute;bottom:calc(100% + 11px);left:50%;transform:translate(-50%,5px);
+  font-family:var(--font-m);font-size:9px;letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;
+  padding:5px 9px;border-radius:8px;background:rgba(6,8,14,.94);border:1px solid var(--line);color:var(--ink-2);
+  opacity:0;pointer-events:none;transition:opacity 260ms,transform 320ms var(--e-out)}
+.sw:hover .sw__name,.sw:focus-visible .sw__name{opacity:1;transform:translate(-50%,0)}
+.vr{width:1px;height:30px;background:var(--line);flex:0 0 auto}
+.dock__tools{display:flex;align-items:center;gap:7px}
+.dock__hint{display:flex;align-items:center;gap:8px;padding:0 12px 0 4px;font-family:var(--font-m);
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap}
+.dock__hint svg{width:15px;height:15px;animation:nudge 3.4s var(--e-in-out) infinite}
+@keyframes nudge{0%,100%{transform:translateX(0) rotate(0)}30%{transform:translateX(4px) rotate(9deg)}60%{transform:translateX(-4px) rotate(-9deg)}}
+
+/* ============================================================================
+   Loader
+   ========================================================================== */
+.loader{position:fixed;inset:0;z-index:40;display:grid;place-items:center;
+  background:radial-gradient(90% 70% at 50% 42%,#0b0f1c 0%,#04050a 72%);
+  transition:opacity 900ms var(--e-out),visibility 900ms}
+.loader.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.loader__in{display:flex;flex-direction:column;align-items:center;gap:22px;width:min(340px,80vw);text-align:center}
+.loader__mark{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;
+  border:1px solid var(--line-2);background:rgba(255,255,255,.04);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 20px 50px -22px #000;
+  animation:float 4.2s var(--e-in-out) infinite}
+@keyframes float{0%,100%{transform:translateY(-5px)}50%{transform:translateY(5px)}}
+.loader__mark svg{width:30px;height:30px;color:var(--accent)}
+.loader__t{font-family:var(--font-d);font-size:14px;font-weight:800;letter-spacing:.42em;text-transform:uppercase;
+  font-variation-settings:'wdth' 104;color:var(--ink)}
+.loader__bar{position:relative;width:100%;height:2px;border-radius:99px;background:rgba(255,255,255,.10);overflow:hidden}
+.loader__bar i{position:absolute;inset:0;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 0 14px var(--accent);
+  transition:width 420ms var(--e-soft)}
+.loader__meta{display:flex;justify-content:space-between;width:100%;font-family:var(--font-m);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.loader__meta b{color:var(--ink-2);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ============================================================================
+   Toast / notices
+   ========================================================================== */
+.toasts{position:fixed;left:50%;bottom:calc(var(--pad) + var(--safe-b) + 82px);transform:translateX(-50%);
+  z-index:50;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none;width:max-content;max-width:min(92vw,460px)}
+.toast{display:flex;align-items:center;gap:10px;padding:11px 17px;border-radius:999px;
+  border:1px solid var(--line-2);background:rgba(9,12,20,.9);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  box-shadow:var(--shadow-sm);font-size:12.5px;color:var(--ink-2);
+  animation:toastIn 520ms var(--e-out) both}
+.toast svg{width:15px;height:15px;color:var(--accent);flex:0 0 auto}
+.toast__act{pointer-events:auto;margin-left:4px;padding:5px 11px;border-radius:999px;flex:0 0 auto;
+  font-family:var(--font-m);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--on-accent);background:linear-gradient(135deg,var(--accent-2),var(--accent));
+  transition:transform 300ms var(--e-out),filter 300ms}
+.toast__act:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.toast.is-out{animation:toastOut 420ms var(--e-soft) both}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(10px) scale(.97)}}
+
+/* ============================================================================
+   Fatal / capability notice
+   ========================================================================== */
+.fatal{position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:24px;text-align:center;
+  background:radial-gradient(80% 60% at 50% 45%,#0c1020,#04050a)}
+.fatal.is-on{display:grid}
+.fatal__in{max-width:460px;display:flex;flex-direction:column;gap:14px;align-items:center}
+.fatal h2{font-family:var(--font-d);font-size:22px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.fatal p{color:var(--ink-2);font-size:13.5px;line-height:1.7}
+.fatal code{font-family:var(--font-m);font-size:12px;color:var(--accent-2);background:rgba(255,255,255,.06);
+  padding:2px 7px;border-radius:6px}
+
+/* ============================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width:1180px){
+  .rail{display:none}
+  .stagegrid{grid-template-columns:1fr;grid-template-areas:"hero" "dock"}
+  /* the tech sheet becomes a floating sheet under the top bar when requested */
+  body[data-view="tech"] .rail{display:flex;position:fixed;z-index:6;right:var(--pad);
+    top:calc(var(--pad) + var(--safe-t) + 74px);width:min(300px,calc(100vw - 2 * var(--pad)));
+    max-height:calc(100dvh - var(--pad) * 2 - 170px);overflow:auto;overscroll-behavior:contain;
+    animation:railIn 560ms var(--e-out) both}
+}
+@keyframes railIn{from{opacity:0;transform:translate3d(0,-10px,0) scale(.98)}to{opacity:1;transform:none}}
+@media (max-width:1024px){
+  .segbar button{padding:8px 12px;font-size:11.5px}
+}
+@media (max-width:860px){
+  :root{--pad:14px;--blur:16px}
+  .segbar{display:none}
+  .stagegrid{grid-template-rows:1fr auto;gap:12px}
+  .hero{max-width:none;padding:19px 18px 20px;gap:12px;align-self:end;border-radius:var(--r-lg)}
+  .title{font-size:clamp(2.7rem,13.5vw,4.4rem)}
+  .lede{display:none}
+  .assure{display:none}
+  .btn{height:50px;flex:1 1 auto}
+  .actions{width:100%}
+  .dock{width:100%;justify-content:space-between;border-radius:var(--r-lg);padding:10px 12px}
+  .dock__label,.dock__hint,.dock__tools + .vr{display:none}
+  /* the hero card owns the bottom of the screen on phones: notices drop from the top */
+  .toasts{top:calc(var(--pad) + var(--safe-t) + 66px);bottom:auto}
+  body[data-view="tech"] .rail{max-height:calc(100dvh - var(--pad) * 2 - var(--safe-t) - var(--safe-b) - 330px)}
+  .brand__sub{display:none}
+}
+@media (max-width:520px){
+  .chip{display:none}
+  .pricemeta__plan{display:none}
+  .sw{width:34px;height:34px}
+  .sw::after{width:19px;height:19px}
+  .btn{letter-spacing:.09em;font-size:12.5px;padding:0 18px}
+  .actions{flex-wrap:nowrap}
+  .btn--ghost{flex:0 0 auto;padding:0 16px}
+}
+@media (max-height:620px) and (orientation:landscape){
+  .hero{padding:14px 16px;gap:9px}
+  .title{font-size:clamp(2rem,6.4vw,3rem)}
+  .assure{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important}
+  [data-reveal]{opacity:1;transform:none}
+}
+</style>
+</head>
+<body data-view="overview">
+
+<div class="backdrop" aria-hidden="true"></div>
+<canvas id="stage" tabindex="0" role="img"
+        aria-label="Interactive 3D render of the AERO GLIDE sneaker. Drag to rotate, scroll to zoom."></canvas>
+<div class="veil veil--vignette" aria-hidden="true"></div>
+<div class="veil veil--scan" aria-hidden="true"></div>
+<div class="veil veil--grain" aria-hidden="true"></div>
+
+<div class="ui">
+
+  <!-- ===================== TOP BAR ===================== -->
+  <header class="topbar glass" data-reveal style="--d:60ms">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none">
+          <path d="M4 21.6c4.3 1.5 8.2-1.1 11.2-3.7 2.4-2 4.7-3.7 7.3-3.2 2 .4 3.1 1.8 3.5 3.3-4-1.6-6.7.6-9.6 2.9-2.9 2.3-6.7 4.3-12.4.7Z" fill="currentColor" style="color:var(--accent)"/>
+          <path d="M8.6 12.4c3.4-.5 5.9 1.1 8.4 2.7" stroke="rgba(255,255,255,.55)" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="brand__txt">
+        <span class="brand__name">AERO</span>
+        <span class="brand__sub">Atelier&nbsp;3D</span>
+      </span>
+    </div>
+
+    <div class="segbar" role="tablist" aria-label="Showcase sections">
+      <span class="segbar__thumb" id="segThumb" aria-hidden="true"></span>
+      <button role="tab" id="tab-overview" aria-controls="panel-hero" aria-selected="true" data-view-target="overview">Overview</button>
+      <button role="tab" id="tab-tech" aria-controls="panel-rail" aria-selected="false" data-view-target="tech">Technology</button>
+      <button role="tab" id="tab-color" aria-controls="panel-dock" aria-selected="false" data-view-target="color">Colorways</button>
+    </div>
+
+    <div class="topbar__right">
+      <span class="chip" id="stockChip" title="Remaining pairs in this drop">
+        <span class="chip__dot" aria-hidden="true"></span><b id="stockNum">128</b>&nbsp;/&nbsp;500 pairs
+      </span>
+      <button class="iconbtn" id="btnSpin" type="button" aria-pressed="true"
+              aria-label="Pause auto-rotation" title="Auto-rotate (R)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+        </svg>
+      </button>
+      <button class="iconbtn" id="btnReset" type="button" aria-label="Reset camera view" title="Reset view (0)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v2.8M12 18.6v2.8M2.6 12h2.8M18.6 12h2.8M5.4 5.4l2 2M16.6 16.6l2 2M18.6 5.4l-2 2M7.4 16.6l-2 2"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================== STAGE GRID ===================== -->
+  <div class="stagegrid">
+
+    <section class="hero glass" id="panel-hero" role="tabpanel" aria-labelledby="tab-overview" data-reveal style="--d:200ms">
+      <span class="eyebrow"><i class="eyebrow__gem" aria-hidden="true"></i>Drop&nbsp;01 · SS26 · Edition of 500</span>
+
+      <h1 class="title">
+        <span class="l1">Aero</span>
+        <span class="l2">Glide</span>
+      </h1>
+
+      <p class="lede">
+        A single-piece <strong>engineered knit</strong> upper bonded to a nitrogen-infused
+        <strong>AeroFoam&trade;</strong> midsole. 212 grams of tuned compliance — tuned in the
+        wind tunnel, finished by hand in Porto.
+      </p>
+
+      <div class="pricewrap">
+        <div class="price">
+          <span class="price__tag">Pre-order · −20%</span>
+          <span class="price__cur">$</span>
+          <span class="price__val" id="priceVal">0</span>
+          <span class="price__cents" id="priceCents">.00</span>
+        </div>
+        <div class="pricemeta">
+          <span class="pricemeta__was">MSRP <s>$310.00</s></span>
+          <span class="pricemeta__plan">or <b>4 × $62.00</b> interest-free</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn--primary" id="btnPreorder" type="button" data-magnetic>
+          <span class="btn__label">Pre-Order Now</span>
+          <span class="btn__arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>
+            </svg>
+          </span>
+          <span class="btn__spinner" aria-hidden="true"><i></i></span>
+        </button>
+        <button class="btn btn--ghost" id="btnTech" type="button" aria-controls="panel-rail" aria-expanded="false">Tech sheet</button>
+      </div>
+
+      <ul class="assure">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Ships 12 Mar</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>30-day returns</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>2-year warranty</li>
+      </ul>
+    </section>
+
+    <aside class="rail glass" id="panel-rail" role="tabpanel" aria-labelledby="tab-tech" data-reveal style="--d:340ms">
+      <div class="rail__head">
+        <h2 class="rail__title">Technical sheet</h2>
+        <span class="rail__badge" id="railVariant">Midnight</span>
+      </div>
+
+      <div class="spec"><span class="spec__k">Mass</span><span class="spec__v">212 g</span>
+        <span class="spec__bar" style="--w:34%"><i></i></span></div>
+      <div class="spec"><span class="spec__k">Heel drop</span><span class="spec__v">8 mm</span>
+        <span class="spec__bar" style="--w:52%"><i></i></span></div>
+      <div class="spec"><span class="spec__k">Energy return</span><span class="spec__v">87 %</span>
+        <span class="spec__bar" style="--w:87%"><i></i></span></div>
+      <div class="spec"><span class="spec__k">Stack height</span><span class="spec__v">36 / 28</span>
+        <span class="spec__bar" style="--w:66%"><i></i></span></div>
+      <div class="spec"><span class="spec__k">Upper</span><span class="spec__v">Knit 2.0</span>
+        <span class="spec__bar" style="--w:78%"><i></i></span></div>
+      <div class="spec"><span class="spec__k">Outsole grip</span><span class="spec__v">0.94 µ</span>
+        <span class="spec__bar" style="--w:94%"><i></i></span></div>
+
+      <div class="rail__foot">
+        <span>Size EU</span>
+        <div class="sizes" id="sizes" role="group" aria-label="Select size">
+          <button type="button" aria-pressed="false">40</button>
+          <button type="button" aria-pressed="false">41</button>
+          <button type="button" aria-pressed="true">42</button>
+          <button type="button" aria-pressed="false">43</button>
+          <button type="button" aria-pressed="false">44</button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="dock glass" id="panel-dock" role="tabpanel" aria-labelledby="tab-color" data-reveal style="--d:480ms">
+      <span class="dock__label">Colorway</span>
+      <div class="colorways" id="colorways" role="group" aria-label="Select colorway"></div>
+      <span class="vr" aria-hidden="true"></span>
+      <div class="dock__tools">
+        <button class="iconbtn" id="btnZoomOut" type="button" aria-label="Zoom out" title="Zoom out (−)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+        </button>
+        <button class="iconbtn" id="btnZoomIn" type="button" aria-label="Zoom in" title="Zoom in (+)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <span class="vr" aria-hidden="true"></span>
+      <span class="dock__hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 11.5V6a1.6 1.6 0 0 1 3.2 0v5"/><path d="M12.2 11V9.4a1.5 1.5 0 0 1 3 0V11"/><path d="M15.2 11.4a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.4a6 6 0 0 1-4.6-2.1L4 15.6a1.6 1.6 0 0 1 2.4-2.1L9 16"/>
+        </svg>Drag to rotate
+      </span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== LOADER ===================== -->
+<div class="loader" id="loader">
+  <div class="loader__in">
+    <div class="loader__mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none">
+        <path d="M4 21.6c4.3 1.5 8.2-1.1 11.2-3.7 2.4-2 4.7-3.7 7.3-3.2 2 .4 3.1 1.8 3.5 3.3-4-1.6-6.7.6-9.6 2.9-2.9 2.3-6.7 4.3-12.4.7Z" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="loader__t">Aero Glide</div>
+    <div class="loader__bar"><i id="loadFill"></i></div>
+    <div class="loader__meta"><b id="loadStage">Initialising renderer</b><span id="loadPct">0%</span></div>
+  </div>
+</div>
+
+<!-- ===================== TOASTS ===================== -->
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ===================== FATAL ===================== -->
+<div class="fatal" id="fatal">
+  <div class="fatal__in">
+    <h2>WebGL unavailable</h2>
+    <p id="fatalMsg">This showcase needs WebGL to render the product in real time. Enable hardware acceleration or try a current version of Chrome, Edge, Firefox or Safari.</p>
+    <p style="color:var(--ink-3);font-size:12px">Serve this page over HTTP (for example <code>python3 -m http.server</code>) — opening it straight from disk blocks module and model loading.</p>
+  </div>
+</div>
+
+<noscript>
+  <div style="position:fixed;inset:0;z-index:99;display:grid;place-items:center;background:#04050a;padding:24px;text-align:center">
+    <p style="max-width:420px;font-family:system-ui,sans-serif;color:#f1f4fb">
+      <strong>AERO GLIDE</strong> — this showcase is a real-time 3D experience and requires JavaScript.
+    </p>
+  </div>
+</noscript>
+
+<script>
+/* Watchdog (classic script, runs even if the module graph cannot be fetched):
+   if three.js never arrives from the CDN, explain why instead of spinning forever. */
+window.__aeroWatchdog = setTimeout(function () {
+  if (window.__aeroBooted) return;
+  var fatal = document.getElementById('fatal');
+  if (!fatal) return;
+  fatal.querySelector('h2').textContent = 'Could not load the 3D engine';
+  document.getElementById('fatalMsg').textContent =
+    'three.js could not be downloaded from cdn.jsdelivr.net. Check your connection or content blocker, then reload the page.';
+  fatal.classList.add('is-on');
+}, 25000);
+</script>
+
+<script type="module">
+/* ════════════════════════════════════════════════════════════════════════════
+   AERO GLIDE · real-time 3D product showcase
+   ────────────────────────────────────────────────────────────────────────────
+   three.js r187 · single file · no build step
+   Streams ./shoe.glb through GLTFLoader (Draco / Meshopt / KTX2 decoders are
+   imported on demand, only when the asset declares them), auto-orients,
+   centres and scales it, then layers a turntable + parallax rig, a dark studio
+   lighting setup with a soft shadow floor, and a glassmorphism commerce UI.
+   If ./shoe.glb cannot be fetched, a fully procedural sneaker is generated in
+   its place so the page is never a blank canvas.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+/* ═══ 1 · CONFIGURATION ═════════════════════════════════════════════════════ */
+
+const CONFIG = Object.freeze({
+  modelUrl       : 'shoe.glb',
+  cdn            : 'https://cdn.jsdelivr.net/npm/three@0.187.0',
+  targetLength   : 2.75,     // canonical footprint length the model is scaled to
+  fov            : 32,
+  elevation      : 0.25,    // rad — camera pitch above the product
+  azimuth        : 0.155,    // rad — camera yaw (a gentle 3/4 view)
+  autoSpeed      : 0.235,    // rad/s turntable speed
+  idleResume     : 2400,     // ms of stillness before auto-rotation resumes
+  dragScale      : 0.0068,   // rad per pointer pixel
+  tiltRange      : 0.055,    // rad — model tilt driven by pointer Y
+  parallax       : 0.34,     // world units of camera drift per pointer half-width
+  zoom           : { min: 0.70, max: 1.62, default: 1 },
+  restSpin       : -0.52,    // rad — hero yaw: toe swung toward the viewer
+  pitch          : -0.07,    // rad — toe-down "mid-stride" attitude
+  hover          : 0.055,    // float height as a share of the product length
+  bob            : 0.011,    // bob amplitude as a share of the product length
+  bobPeriod      : 5.6,      // s
+  introDuration  : 2.1,      // s
+  maxDpr         : 2,
+  shadowMapSize  : 512,      // VSM: a small map blurred hard = soft penumbra, tiny cost
+  shadowRadius   : 12,       // ±12 texels of variance blur ≈ 9 cm penumbra at product scale
+  envIntensity   : 0.62,     // dark-studio IBL: softbox reflections, black surround
+  exposure       : 1.0,
+});
+
+/* Colorways. `variant` matches a KHR_materials_variants entry when the loaded
+   GLB ships variants; otherwise the palette still retints the studio lighting,
+   the CSS theme and (for the procedural build) the product materials.       */
+const COLORWAYS = Object.freeze([
+  { id:'midnight', label:'Midnight', variant:'midnight',
+    swatch:'linear-gradient(140deg,#5b86b8 0%,#1b2b41 52%,#080d16 100%)',
+    accent:'#5ea8ff', accent2:'#a9d3ff', rim:0x4d8dff, key:0xdfe9ff, under:0x2f6bff,
+    upper:0x1a2332, toe:0x121a26, midsole:0xe8eaf0, laces:0xdfe4ee },
+  { id:'beach', label:'Beach', variant:'beach',
+    swatch:'linear-gradient(140deg,#f0d9b5 0%,#c39a72 55%,#6d4c33 100%)',
+    accent:'#f0c088', accent2:'#ffddb0', rim:0xffb877, key:0xfff2df, under:0xff9d4d,
+    upper:0xd8c3a5, toe:0xbda588, midsole:0xfaf4e8, laces:0xf6ead6 },
+  { id:'street', label:'Street', variant:'street',
+    swatch:'linear-gradient(140deg,#ff7a6a 0%,#c0392f 55%,#3d110f 100%)',
+    accent:'#ff5f52', accent2:'#ff9b86', rim:0xff4d5e, key:0xffe6dc, under:0xff3b30,
+    upper:0x9c2f2a, toe:0x6d211d, midsole:0xf3ece6, laces:0xf2e9e2 },
+]);
+
+/* Where the product sits inside the viewport, as fractions of width/height.
+   `cx/cy` = centre of the product zone, `fx/fy` = share of the viewport the
+   product may occupy. Keeps the shoe clear of the glass panels at any size.  */
+const ZONES = Object.freeze({
+  wide   : { cx:0.615, cy:0.500, fx:0.585, fy:0.790, pad:1.045 },
+  medium : { cx:0.575, cy:0.480, fx:0.735, fy:0.800, pad:1.060 },
+  narrow : { cx:0.500, cy:0.372, fx:0.930, fy:0.545, pad:1.075 },
+  short  : { cx:0.640, cy:0.500, fx:0.470, fy:0.860, pad:1.050 },
+});
+
+/* ═══ 2 · SMALL UTILITIES ═══════════════════════════════════════════════════ */
+
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const clamp  = THREE.MathUtils.clamp;
+const damp   = THREE.MathUtils.damp;      // frame-rate independent exponential lerp
+const lerp   = THREE.MathUtils.lerp;
+const deg    = THREE.MathUtils.degToRad;
+const sleep  = (ms) => new Promise(r => setTimeout(r, ms));
+const titleCase = (s) => s.replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+const prefersReducedMotion = () =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isFinePointer = () =>
+  window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+
+/* ═══ 3 · RUNTIME TEXTURE FOUNDRY (no external image assets) ════════════════ */
+
+/* roundRect is baseline-modern but guard anyway — the foundry must never throw. */
+if (typeof CanvasRenderingContext2D !== 'undefined' &&
+    !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    const k = Math.min(typeof r === 'number' ? r : 0, w / 2, h / 2);
+    this.moveTo(x + k, y);
+    this.arcTo(x + w, y, x + w, y + h, k);
+    this.arcTo(x + w, y + h, x, y + h, k);
+    this.arcTo(x, y + h, x, y, k);
+    this.arcTo(x, y, x + w, y, k);
+    this.closePath();
+    return this;
+  };
+}
+
+function makeCanvas(w, h = w) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+/** Bake a height field into a tangent-space normal map. */
+function normalFromHeight(size, paint, strength = 2.2) {
+  const src = makeCanvas(size), sctx = src.getContext('2d', { willReadFrequently:true });
+  paint(sctx, size);
+  const h = sctx.getImageData(0, 0, size, size).data;
+  const out = makeCanvas(size), octx = out.getContext('2d');
+  const img = octx.createImageData(size, size);
+  const at = (x, y) => h[(((y + size) % size) * size + ((x + size) % size)) * 4] / 255;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = (at(x - 1, y) - at(x + 1, y)) * strength;
+      const dy = (at(x, y - 1) - at(x, y + 1)) * strength;
+      const len = Math.hypot(dx, dy, 1);
+      const i = (y * size + x) * 4;
+      img.data[i    ] = ((dx / len) * 0.5 + 0.5) * 255;
+      img.data[i + 1] = ((dy / len) * 0.5 + 0.5) * 255;
+      img.data[i + 2] = ((1  / len) * 0.5 + 0.5) * 255;
+      img.data[i + 3] = 255;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(out);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+/** Engineered-knit weave: two interlaced yarn families plus a fine mesh grid. */
+function knitNormalTexture() {
+  const tex = normalFromHeight(256, (ctx, s) => {
+    ctx.fillStyle = '#404040'; ctx.fillRect(0, 0, s, s);
+    const cell = 16;
+    for (let y = 0; y < s; y += cell) {
+      for (let x = 0; x < s; x += cell) {
+        const even = ((x / cell) + (y / cell)) % 2 === 0;
+        const g = ctx.createLinearGradient(x, y, x + cell, y + cell);
+        if (even) { g.addColorStop(0, '#2a2a2a'); g.addColorStop(.5, '#e8e8e8'); g.addColorStop(1, '#2a2a2a'); }
+        else      { g.addColorStop(0, '#e8e8e8'); g.addColorStop(.5, '#3a3a3a'); g.addColorStop(1, '#e8e8e8'); }
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.roundRect(x + 1, y + 1, cell - 2, cell - 2, 5);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = .5; ctx.strokeStyle = '#111'; ctx.lineWidth = 1;
+    for (let i = 0; i <= s; i += cell / 2) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i); ctx.stroke();
+    }
+  }, 1.7);
+  tex.repeat.set(9, 4);
+  tex.anisotropy = 4;
+  return tex;
+}
+
+/** Outsole lug pattern — blocks separated by deep grooves. */
+function treadNormalTexture() {
+  const tex = normalFromHeight(256, (ctx, s) => {
+    ctx.fillStyle = '#1c1c1c'; ctx.fillRect(0, 0, s, s);
+    ctx.fillStyle = '#f2f2f2';
+    const bw = 42, bh = 26, gap = 9;
+    for (let y = 0; y < s + bh; y += bh + gap) {
+      const off = (Math.round(y / (bh + gap)) % 2) * (bw / 2);
+      for (let x = -bw; x < s + bw; x += bw + gap) {
+        ctx.beginPath();
+        ctx.roundRect(x + off, y, bw, bh, 7);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = .35; ctx.fillStyle = '#808080';
+    for (let y = 0; y < s + bh; y += bh + gap) {
+      const off = (Math.round(y / (bh + gap)) % 2) * (bw / 2);
+      for (let x = -bw; x < s + bw; x += bw + gap) {
+        ctx.beginPath(); ctx.roundRect(x + off + 9, y + 8, bw - 18, bh - 16, 4); ctx.fill();
+      }
+    }
+  }, 2.6);
+  tex.repeat.set(7, 3);
+  return tex;
+}
+
+/** Soft radial falloff used for the studio floor mask, shadows and light pool. */
+function radialTexture(stops, size = 256) {
+  const c = makeCanvas(size), ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  stops.forEach(([o, col]) => g.addColorStop(o, col));
+  ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+const TEX = {
+  floorFade : () => radialTexture([[0,'rgba(255,255,255,1)'],[.34,'rgba(255,255,255,.92)'],
+                                   [.62,'rgba(255,255,255,.34)'],[.84,'rgba(255,255,255,.05)'],
+                                   [1,'rgba(255,255,255,0)']]),
+  contact   : () => radialTexture([[0,'rgba(0,0,0,.92)'],[.36,'rgba(0,0,0,.62)'],
+                                   [.66,'rgba(0,0,0,.24)'],[.86,'rgba(0,0,0,.06)'],
+                                   [1,'rgba(0,0,0,0)']], 512),
+  pool      : () => radialTexture([[0,'rgba(255,255,255,.85)'],[.28,'rgba(255,255,255,.34)'],
+                                   [.62,'rgba(255,255,255,.08)'],[1,'rgba(255,255,255,0)']], 512),
+};
+
+/* ═══ 4 · FRAMING + VARIANT MATH (pure, unit-tested) ════════════════════════ */
+
+/** Pick the product zone for the current viewport shape. */
+function zoneFor(width, height) {
+  const aspect = width / Math.max(1, height);
+  if (height < 560 && aspect > 1.25) return ZONES.short;
+  if (aspect >= 1.22) return ZONES.wide;
+  if (aspect >= 0.86) return ZONES.medium;
+  return ZONES.narrow;
+}
+
+/**
+ * Solve the camera distance + look-at target that places a bounding box of
+ * `size` inside the product zone, whatever the viewport aspect is.
+ * Returns { distance, target:{x,y}, visibleHalfW, visibleHalfH }.
+ */
+function solveFraming(size, fovDegrees, aspect, zone) {
+  const tanV = Math.tan(deg(fovDegrees) / 2);
+  const tanH = tanV * aspect;
+  // Rotating product: the horizontal extent is the footprint diagonal.
+  // Visible span at distance d is 2·d·tan(half-fov); the product may fill fx / fy of it.
+  const fitW = Math.hypot(size.x, size.z);
+  const fitH = size.y;
+  const dHorizontal = fitW / (2 * tanH * zone.fx);
+  const dVertical   = fitH / (2 * tanV * zone.fy);
+  const distance = Math.max(dHorizontal, dVertical) * zone.pad;
+  const centerY = fitH / 2;                        // box is grounded on y = 0
+  return {
+    distance,
+    target: {
+      x: -2 * (zone.cx - 0.5) * distance * tanH,   // pushes the product to cx
+      y: centerY - 2 * (0.5 - zone.cy) * distance * tanV,
+    },
+    visibleHalfW: distance * tanH,
+    visibleHalfH: distance * tanV,
+  };
+}
+
+/**
+ * Read KHR_materials_variants out of a parsed GLTF and bind it to the meshes
+ * three.js produced (GLTFParser#associations carries mesh → {meshes, primitives}).
+ * Returns null when the asset has no variants.
+ */
+function collectVariants(gltf) {
+  const parser = gltf && gltf.parser;
+  const json   = parser && parser.json;
+  const ext    = json && json.extensions && json.extensions.KHR_materials_variants;
+  if (!ext || !Array.isArray(ext.variants) || !ext.variants.length) return null;
+
+  const names = ext.variants.map(v => String(v.name));
+  const entries = [];
+
+  gltf.scene.traverse((obj) => {
+    if (!obj.isMesh) return;
+    const assoc = parser.associations && parser.associations.get(obj);
+    if (!assoc || assoc.meshes === undefined || assoc.primitives === undefined) return;
+    const meshDef = json.meshes && json.meshes[assoc.meshes];
+    const primDef = meshDef && meshDef.primitives && meshDef.primitives[assoc.primitives];
+    const mappings = primDef && primDef.extensions &&
+                     primDef.extensions.KHR_materials_variants &&
+                     primDef.extensions.KHR_materials_variants.mappings;
+    if (!Array.isArray(mappings)) return;
+
+    const byName = Object.create(null);
+    for (const m of mappings) {
+      if (typeof m.material !== 'number') continue;
+      for (const vi of (Array.isArray(m.variants) ? m.variants : [])) {
+        const nm = names[vi];
+        if (nm) byName[nm] = m.material;
+      }
+    }
+    if (Object.keys(byName).length) entries.push({ mesh: obj, base: obj.material, byName });
+  });
+
+  return entries.length ? { names, entries } : null;
+}
+
+/* ═══ 5 · PROCEDURAL PRODUCT BUILD ═════════════════════════════════════════
+   A last-driven loft: outsole, midsole, upper, toe cap, heel counter and
+   mudguard are all swept from the same station profiles, so panels meet with
+   no gaps, and every piece of hardware is sampled straight off the upper
+   surface. Units are decimetres — the build is a 30 cm runner with an 8 mm
+   drop and a 36/28 mm stack. Used only when shoe.glb cannot be fetched.     */
+
+const LAST_LENGTH = 3.0;
+const xAt = (u) => -LAST_LENGTH / 2 + LAST_LENGTH * u;
+const uAt = (x) => (x + LAST_LENGTH / 2) / LAST_LENGTH;
+const smoothstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0 || 1e-6), 0, 1); return t * t * (3 - 2 * t); };
+
+/** Monotonic-in-x Catmull-Rom lookup → f(u). */
+function spline2D(points, samples = 420) {
+  const curve = new THREE.CatmullRomCurve3(
+    points.map(p => new THREE.Vector3(p[0], p[1], 0)), false, 'catmullrom', 0.5);
+  const table = [];
+  for (let i = 0; i <= samples; i++) { const p = curve.getPoint(i / samples); table.push([p.x, p.y]); }
+  table.sort((a, b) => a[0] - b[0]);
+  return (u) => {
+    const x = clamp(u, 0, 1);
+    if (x <= table[0][0]) return table[0][1];
+    let lo = 0, hi = table.length - 1;
+    if (x >= table[hi][0]) return table[hi][1];
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (table[mid][0] <= x) lo = mid; else hi = mid; }
+    return lerp(table[lo][1], table[hi][1], (x - table[lo][0]) / (table[hi][0] - table[lo][0]));
+  };
+}
+
+const PROFILE = Object.freeze({
+  half   : spline2D([[0,.004],[.025,.20],[.075,.325],[.15,.385],[.25,.40],[.35,.395],[.45,.425],
+                     [.55,.465],[.65,.50],[.73,.505],[.82,.48],[.89,.42],[.945,.32],[.98,.16],[1,.004]]),
+  ground : spline2D([[0,.075],[.04,.028],[.12,.006],[.30,0],[.55,0],[.70,.006],[.82,.038],
+                     [.91,.095],[.965,.155],[1,.205]]),
+  soleTop: spline2D([[0,.335],[.05,.362],[.15,.360],[.30,.340],[.45,.315],[.58,.298],
+                     [.68,.288],[.78,.292],[.88,.312],[.95,.322],[1,.315]]),
+  upperH : spline2D([[0,.085],[.04,.24],[.10,.375],[.18,.445],[.28,.455],[.38,.42],
+                     [.48,.36],[.58,.30],[.68,.235],[.78,.175],[.87,.125],[.94,.07],[1,.022]]),
+});
+
+const UPPER_SCALE = 0.955;
+const OPEN_START = 0.055, OPEN_FULL = 0.145, OPEN_END = 0.53, OPEN_SHUT = 0.635;
+
+const upperBottom = (u) => PROFILE.soleTop(u) - 0.055;
+const topLine     = (u) => PROFILE.soleTop(u) + PROFILE.upperH(u);
+const halfUpper   = (u) => Math.max(1e-5, PROFILE.half(u) * UPPER_SCALE);
+const openWindow  = (u) => smoothstep(OPEN_START, OPEN_FULL, u) * (1 - smoothstep(OPEN_END, OPEN_SHUT, u));
+const throatDepth = (u) => 0.45 * PROFILE.upperH(u);
+const troughFloor = (u) => topLine(u) - openWindow(u) * throatDepth(u);
+const outsoleTop  = (u) => PROFILE.ground(u) + 0.052 + 0.022 * Math.exp(-Math.pow((u - 0.06) / 0.14, 2));
+
+/** Generic cross-section: full, rounded-rectangle shoe profile. */
+function sectionPoint(u, a, bottom, top, half, out) {
+  const sa = Math.sin(a);
+  const s  = 0.5 - 0.5 * Math.cos(a);                 // 0 at the bottom, 1 at the top
+  const b  = bottom(u);
+  const t  = Math.max(b + 1e-4, top(u));
+  return out.set(xAt(u),
+                 b + (t - b) * Math.pow(s, 0.86),
+                 Math.max(1e-4, half(u)) * Math.sign(sa) * Math.pow(Math.abs(sa), 0.38));
+}
+
+/** The upper's section, with the collar opening carved out of the top. */
+function upperSection(u, a, out) {
+  sectionPoint(u, a, upperBottom, topLine, halfUpper, out);
+  const w = openWindow(u);
+  if (w > 0.001) {
+    const r  = clamp(Math.abs(out.z) / (halfUpper(u) * 0.86), 0, 1.5);
+    const g  = Math.pow(Math.max(0, 1 - r * r), 0.85);
+    const tn = Math.max(0, -Math.cos(a));
+    out.y -= w * g * Math.pow(tn, 0.9) * throatDepth(u);
+    out.z *= 1 - 0.15 * w * g * Math.pow(tn, 1.2);
+  }
+  return out;
+}
+
+/** Wrap a section function into a loft-ready callable. */
+const band = (bottom, top, half) => (u, a, o) => sectionPoint(u, a, bottom, top, half, o);
+
+/** Sweep a closed section from station u0 to u1. */
+function loft({ u0 = 0, u1 = 1, us = 168, vs = 46, section }) {
+  const rows = us + 1, cols = vs + 1;
+  const position = new Float32Array(rows * cols * 3);
+  const uv = new Float32Array(rows * cols * 2);
+  const index = [];
+  const v = new THREE.Vector3();
+  let p = 0, t = 0;
+  for (let i = 0; i < rows; i++) {
+    const u = u0 + (u1 - u0) * (i / us);
+    for (let j = 0; j < cols; j++) {
+      section(u, (j / vs) * Math.PI * 2, v);
+      position[p++] = v.x; position[p++] = v.y; position[p++] = v.z;
+      uv[t++] = u; uv[t++] = j / vs;
+    }
+  }
+  for (let i = 0; i < us; i++) {
+    for (let j = 0; j < vs; j++) {
+      const A = i * cols + j, B = A + cols;
+      index.push(A, B, A + 1, B, B + 1, A + 1);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(position, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(index);
+  g.computeVertexNormals();
+  g.computeBoundingSphere();
+  return g;
+}
+
+/** Point on the upper surface at section parameter t (0 bottom · .5 widest · 1 ridge). */
+function surfT(u, t, side, grow = 1, out = new THREE.Vector3()) {
+  const a = clamp(t, 0, 1) * Math.PI;
+  upperSection(u, side >= 0 ? a : Math.PI * 2 - a, out);
+  if (grow !== 1) { out.z *= grow; out.y += (grow - 1) * 0.05; }
+  return out;
+}
+
+/** Point on the upper surface at a given |z| on the upper half of the section. */
+function surfZ(u, zAbs, side, grow = 1, out = new THREE.Vector3()) {
+  const f = clamp(Math.abs(zAbs) / halfUpper(u), 0, 0.999);
+  const a = Math.PI - Math.asin(Math.pow(f, 1 / 0.38));
+  return surfT(u, a / Math.PI, side, grow, out);
+}
+
+function tube(points, radius, seg = 96, radial = 10, closed = false) {
+  const curve = new THREE.CatmullRomCurve3(points, closed, 'catmullrom', 0.4);
+  const g = new THREE.TubeGeometry(curve, seg, radius, radial, closed);
+  g.computeBoundingSphere();
+  return g;
+}
+
+/** Build the fallback product, grounded on y = 0 with its length along X. */
+function buildShowcaseSneaker(cw) {
+  const group = new THREE.Group();
+  group.name = 'AeroGlide_Procedural';
+
+  const knitNormal = knitNormalTexture();
+  const treadNormal = treadNormalTexture();
+
+  const mat = {
+    knit: new THREE.MeshPhysicalMaterial({
+      color: cw.upper, roughness: 0.94, metalness: 0, sheen: 1, sheenRoughness: 0.62,
+      sheenColor: new THREE.Color(0xffffff), normalMap: knitNormal,
+      normalScale: new THREE.Vector2(0.6, 0.6), envMapIntensity: 0.85 }),
+    suede: new THREE.MeshPhysicalMaterial({
+      color: cw.toe, roughness: 1, metalness: 0, sheen: 0.85,
+      sheenColor: new THREE.Color(cw.toe).lerp(new THREE.Color(0xffffff), 0.4),
+      envMapIntensity: 0.7 }),
+    tpu: new THREE.MeshPhysicalMaterial({
+      color: 0x14161d, roughness: 0.26, metalness: 0.18, clearcoat: 1,
+      clearcoatRoughness: 0.1, envMapIntensity: 1.25 }),
+    foam: new THREE.MeshPhysicalMaterial({
+      color: cw.midsole, roughness: 0.58, metalness: 0, clearcoat: 0.22,
+      clearcoatRoughness: 0.72, sheen: 0.45, sheenColor: new THREE.Color(0xffffff),
+      envMapIntensity: 0.9 }),
+    rubber: new THREE.MeshStandardMaterial({
+      color: 0x0b0c11, roughness: 0.9, metalness: 0.02, normalMap: treadNormal,
+      normalScale: new THREE.Vector2(0.9, 0.9), envMapIntensity: 0.55 }),
+    lace: new THREE.MeshPhysicalMaterial({
+      color: cw.laces, roughness: 0.95, metalness: 0, sheen: 1,
+      sheenColor: new THREE.Color(0xffffff), envMapIntensity: 0.6 }),
+    metal: new THREE.MeshStandardMaterial({ color: 0xc9d2e2, roughness: 0.24, metalness: 1, envMapIntensity: 1.4 }),
+    liner: new THREE.MeshStandardMaterial({ color: 0x0a0b11, roughness: 0.95, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.3 }),
+    accent: new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color(cw.accent), roughness: 0.3, metalness: 0.25, clearcoat: 1,
+      clearcoatRoughness: 0.08, emissive: new THREE.Color(cw.accent),
+      emissiveIntensity: 0.2, envMapIntensity: 1.1 }),
+  };
+
+  const add = (geo, material, name, castShadow = true) => {
+    const m = new THREE.Mesh(geo, material);
+    m.name = name; m.castShadow = castShadow; m.receiveShadow = true;
+    group.add(m);
+    return m;
+  };
+
+  /* ── sole stack ─────────────────────────────────────────────────────── */
+  add(loft({ us: 152, vs: 40, section: band(PROFILE.ground, outsoleTop, (u) => PROFILE.half(u) * 1.035) }),
+      mat.rubber, 'outsole');
+
+  add(loft({ us: 176, vs: 44,
+             section: band((u) => outsoleTop(u) - 0.012, PROFILE.soleTop,
+                           (u) => PROFILE.half(u) * (1 + 0.11 * Math.exp(-Math.pow((u - 0.075) / 0.13, 2)))) }),
+      mat.foam, 'midsole');
+
+  /* ── upper + proud panels ───────────────────────────────────────────── */
+  add(loft({ us: 232, vs: 58, section: upperSection }), mat.knit, 'upper');
+
+  add(loft({ u0: 0.795, u1: 1, us: 62, vs: 50,
+             section: band((u) => PROFILE.soleTop(u) - 0.014, (u) => topLine(u) + 0.004,
+                           (u) => halfUpper(u) * 1.026) }), mat.suede, 'toecap');
+
+  add(loft({ u0: 0, u1: 0.205, us: 66, vs: 50,
+             section: band((u) => PROFILE.soleTop(u) - 0.03, (u) => topLine(u) + 0.004,
+                           (u) => halfUpper(u) * 1.032) }), mat.tpu, 'heelcounter');
+
+  add(loft({ u0: 0.012, u1: 0.985, us: 208, vs: 26,
+             section: band((u) => PROFILE.soleTop(u) - 0.048, (u) => PROFILE.soleTop(u) + 0.04,
+                           (u) => halfUpper(u) * 1.022) }), mat.tpu, 'mudguard');
+
+  /* ── collar rim, traced along the carved opening ────────────────────── */
+  const rimPts = [];
+  const RIM_N = 58, RIM_U0 = OPEN_FULL - 0.03, RIM_U1 = OPEN_END + 0.045;
+  for (let i = 0; i <= RIM_N; i++) {
+    const u = lerp(RIM_U0, RIM_U1, i / RIM_N);
+    rimPts.push(surfZ(u, 0.88 * halfUpper(u) * openWindow(u), 1, 1.004));
+  }
+  for (let i = RIM_N; i >= 0; i--) {
+    const u = lerp(RIM_U0, RIM_U1, i / RIM_N);
+    rimPts.push(surfZ(u, 0.88 * halfUpper(u) * openWindow(u), -1, 1.004));
+  }
+  add(tube(rimPts, 0.038, 240, 14, true), mat.liner, 'collar');
+
+  /* ── sock liner inside the opening ──────────────────────────────────── */
+  {
+    const LIN_U0 = OPEN_FULL + 0.012, LIN_U1 = OPEN_END - 0.015;
+    const g = new THREE.PlaneGeometry(1, 1, 72, 12);
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const su = pos.getX(i) + 0.5;
+      const sw = pos.getY(i) * 2;
+      const u = lerp(LIN_U0, LIN_U1, su);
+      const zMax = 0.88 * halfUpper(u) * openWindow(u) * 0.86;
+      const z = -sw * zMax;
+      const y = troughFloor(u) + 0.014 - 0.022 * sw * sw;
+      pos.setXYZ(i, xAt(u), y, z);
+    }
+    g.computeVertexNormals();
+    const liner = new THREE.Mesh(g, mat.liner);
+    liner.name = 'liner'; liner.castShadow = false; liner.receiveShadow = true;
+    group.add(liner);
+  }
+
+  /* ── tongue ─────────────────────────────────────────────────────────── */
+  {
+    const U_C = 0.47, U_A = 0.325, U_B = 0.615;
+    const len = xAt(U_B) - xAt(U_A);
+    const tg = new THREE.CapsuleGeometry(0.105, Math.max(0.05, len - 0.21), 8, 24);
+    tg.rotateZ(Math.PI / 2);
+    tg.scale(1, 0.5, 1);
+    const pos = tg.attributes.position;
+    const baseY = troughFloor(U_C) + 0.052;
+    for (let i = 0; i < pos.count; i++) {
+      const lx = pos.getX(i), lz = pos.getZ(i);
+      const u = clamp(uAt(lx + xAt(U_C)), 0.01, 0.99);
+      const taper = 0.70 + 0.30 * (1 - clamp(Math.abs(u - U_C) / ((U_B - U_A) * 0.5), 0, 1));
+      pos.setXYZ(i, lx, pos.getY(i) * 0.9 + (troughFloor(u) + 0.052 - baseY), lz * taper);
+    }
+    tg.computeVertexNormals();
+    const tongue = new THREE.Mesh(tg, mat.lace);
+    tongue.position.set(xAt(U_C), baseY, 0);
+    tongue.name = 'tongue'; tongue.castShadow = true; tongue.receiveShadow = true;
+    group.add(tongue);
+  }
+
+  /* ── laces + eyelets ────────────────────────────────────────────────── */
+  {
+    const ROWS = 5;
+    const eyeGeo = new THREE.TorusGeometry(0.021, 0.0075, 8, 18);
+    for (let k = 0; k < ROWS; k++) {
+      const t = k / (ROWS - 1);
+      const uA = lerp(0.335, 0.565, t), uB = uA + 0.045;
+      const aL = surfZ(uA, 0.90 * halfUpper(uA) * openWindow(uA),  1, 1.03);
+      const bR = surfZ(uB, 0.90 * halfUpper(uB) * openWindow(uB), -1, 1.03);
+      const aR = surfZ(uA, 0.90 * halfUpper(uA) * openWindow(uA), -1, 1.03);
+      const bL = surfZ(uB, 0.90 * halfUpper(uB) * openWindow(uB),  1, 1.03);
+      const uM = (uA + uB) / 2, yM = troughFloor(uM) + 0.135;
+      add(tube([aL.clone(), new THREE.Vector3(xAt(uM), yM, (aL.z + bR.z) * 0.06), bR.clone()],
+               0.0185, 44, 9), mat.lace, `lace_${k}`);
+      add(tube([aR.clone(), new THREE.Vector3(xAt(uM), yM + 0.011, (aR.z + bL.z) * 0.06), bL.clone()],
+               0.0185, 44, 9), mat.lace, `laceX_${k}`);
+      for (const anchor of [aL, bR, aR, bL]) {
+        const eye = new THREE.Mesh(eyeGeo, mat.metal);
+        eye.position.copy(anchor);
+        eye.lookAt(anchor.x + 0.06, anchor.y + 0.42, anchor.z * 2.4);
+        eye.name = 'eyelet'; eye.castShadow = false; eye.receiveShadow = true;
+        group.add(eye);
+      }
+    }
+  }
+
+  /* ── lateral tension cables ─────────────────────────────────────────── */
+  for (const side of [1, -1]) {
+    for (let k = 0; k < 3; k++) {
+      const u = 0.355 + 0.088 * k;
+      add(tube([
+        surfT(u - 0.055, 0.40, side, 1.012).clone(),
+        surfT(u,         0.66, side, 1.016).clone(),
+        surfZ(u + 0.03,  0.90 * halfUpper(u + 0.03) * openWindow(u + 0.03), side, 1.02).clone(),
+      ], 0.0105, 48, 8), mat.accent, `cable_${side}_${k}`);
+    }
+  }
+
+  /* ── heel pull tab ──────────────────────────────────────────────────── */
+  {
+    const tab = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.016, 10, 24, Math.PI * 1.25), mat.accent);
+    tab.position.set(xAt(0.042), topLine(0.042) - 0.012, 0);
+    tab.rotation.z = -0.393;
+    tab.name = 'pulltab'; tab.castShadow = true; tab.receiveShadow = true;
+    group.add(tab);
+  }
+
+  /* ── brand hits on both quarters ────────────────────────────────────── */
+  {
+    const geo = new THREE.CapsuleGeometry(0.02, 0.19, 6, 14);
+    for (const side of [1, -1]) {
+      const hit = new THREE.Mesh(geo, mat.accent);
+      const p = surfT(0.215, 0.60, side, 1.012);
+      hit.position.copy(p);
+      hit.rotation.set(0, 0, 1.30);
+      hit.scale.set(1, 1, 0.4);
+      hit.name = 'brandhit'; hit.castShadow = false; hit.receiveShadow = true;
+      group.add(hit);
+    }
+  }
+
+  group.userData.tint = (next) => {
+    mat.knit.color.setHex(next.upper);
+    mat.suede.color.setHex(next.toe);
+    mat.suede.sheenColor.set(new THREE.Color(next.toe).lerp(new THREE.Color(0xffffff), 0.4));
+    mat.foam.color.setHex(next.midsole);
+    mat.lace.color.setHex(next.laces);
+    mat.accent.color.set(next.accent);
+    mat.accent.emissive.set(next.accent);
+  };
+  return group;
+}
+
+/* ═══ 6 · STUDIO — renderer, lighting, floor, product rig, render loop ═════ */
+
+const TAU = Math.PI * 2;
+const easeOutCubic = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+const easeOutExpo  = (t) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * clamp(t, 0, 1)));
+const wrapAngle    = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+const near         = (a, b, eps = 1e-4) => Math.abs(a - b) < eps;
+const KEY_DIR      = new THREE.Vector3(3.4, 5.6, 3.3).normalize();     // warm key: front-right, high
+const SHADE_DIR    = new THREE.Vector3(0.35, 1, -0.42).normalize();    // overhead softbox, slightly behind
+const WHITE        = new THREE.Color(0xffffff);
+const TEXTURE_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap',
+  'alphaMap', 'bumpMap', 'clearcoatMap', 'clearcoatNormalMap', 'clearcoatRoughnessMap',
+  'sheenColorMap', 'sheenRoughnessMap', 'specularColorMap', 'specularIntensityMap',
+  'transmissionMap', 'thicknessMap', 'iridescenceMap', 'anisotropyMap'];
+
+/** Streamed fetch → ArrayBuffer with real download progress (0…1). */
+async function fetchWithProgress(url, onProgress) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status} while fetching ${url}`);
+  const total = Number(response.headers.get('content-length')) || 0;
+  if (!response.body || typeof response.body.getReader !== 'function') {
+    const buffer = await response.arrayBuffer();
+    onProgress(1);
+    return buffer;
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.byteLength;
+    // content-length is the *encoded* size when the server compresses, hence the clamp
+    onProgress(total ? Math.min(0.99, received / total) : 1 - Math.exp(-received / 4e6));
+  }
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  onProgress(1);
+  return bytes.buffer;
+}
+
+/** extensionsUsed ∪ extensionsRequired of a .glb or .gltf payload, without a full parse. */
+function sniffGltfExtensions(buffer) {
+  try {
+    const head = new DataView(buffer, 0, Math.min(20, buffer.byteLength));
+    let json;
+    if (buffer.byteLength >= 20 && head.getUint32(0, true) === 0x46546C67) {        // 'glTF'
+      if (head.getUint32(16, true) !== 0x4E4F534A) return new Set();                 // 'JSON'
+      json = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 20, head.getUint32(12, true))));
+    } else {
+      json = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer)));
+    }
+    return new Set([...(json.extensionsUsed || []), ...(json.extensionsRequired || [])]);
+  } catch {
+    return new Set();
+  }
+}
+
+/** Image-based light: a black cyclorama lit by one big key softbox, two tall
+    strip lights, an overhead diffusion panel and a faint cool floor bounce. */
+function buildStudioEnvironment(renderer) {
+  const env = new THREE.Scene();
+  const trash = [];
+  const keep = (resource) => { trash.push(resource); return resource; };
+  const room = new THREE.Mesh(keep(new THREE.BoxGeometry(1, 1, 1)),
+    keep(new THREE.MeshBasicMaterial({ color: 0x0a0b10, side: THREE.BackSide })));
+  room.scale.set(22, 12, 22);
+  room.position.y = 5;
+  env.add(room);
+  const quad = keep(new THREE.PlaneGeometry(1, 1));
+  const panel = (w, h, power, hex, x, y, z) => {
+    const mesh = new THREE.Mesh(quad, keep(new THREE.MeshBasicMaterial({
+      color: new THREE.Color(hex).multiplyScalar(power), side: THREE.DoubleSide })));
+    mesh.scale.set(w, h, 1);
+    mesh.position.set(x, y, z);
+    mesh.lookAt(0, 0.9, 0);
+    env.add(mesh);
+  };
+  panel(5.2, 3.0, 5.5, 0xfff3e6,  3.6, 5.2,  3.8);   // key softbox, high front-right
+  panel(0.8, 6.0, 7.0, 0xe4edff, -5.6, 2.6, -2.8);   // strip, back-left
+  panel(0.8, 6.0, 4.5, 0xf2f5ff,  5.8, 2.6, -3.4);   // strip, back-right
+  panel(3.6, 3.6, 1.8, 0xffffff,  0.0, 7.8,  0.0);   // overhead diffusion
+  panel(6.0, 1.1, 0.8, 0xbcd3ff, -3.2, 0.7,  5.0);   // low front bounce
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const target = pmrem.fromScene(env, 0.035);
+  pmrem.dispose();
+  trash.forEach((resource) => resource.dispose());
+  return target;
+}
+
+/** Angular comet sweep for the floor orbit ring (planar UVs → polar falloff). */
+function sweepTexture(size = 256) {
+  const c = makeCanvas(size), ctx = c.getContext('2d');
+  if (typeof ctx.createConicGradient === 'function') {
+    const g = ctx.createConicGradient(0, size / 2, size / 2);
+    g.addColorStop(0.00, 'rgba(255,255,255,0)');
+    g.addColorStop(0.55, 'rgba(255,255,255,.05)');
+    g.addColorStop(0.86, 'rgba(255,255,255,.42)');
+    g.addColorStop(0.985, 'rgba(255,255,255,1)');
+    g.addColorStop(1.00, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+  }
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/** +1 when the taller end of the model (a shoe's heel collar) sits on +X, −1 on −X, 0 if unclear. */
+function heelSign(root, box) {
+  const v = new THREE.Vector3();
+  const midX = (box.min.x + box.max.x) / 2;
+  const quarter = (box.max.x - box.min.x) * 0.25;
+  let front = -Infinity, back = -Infinity;
+  root.traverse((o) => {
+    const pos = o.isMesh && o.geometry && o.geometry.attributes.position;
+    if (!pos) return;
+    const stride = Math.max(1, Math.floor(pos.count / 40000));
+    for (let i = 0; i < pos.count; i += stride) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      if (v.x > midX + quarter) { if (v.y > front) front = v.y; }
+      else if (v.x < midX - quarter) { if (v.y > back) back = v.y; }
+    }
+  });
+  if (!Number.isFinite(front) || !Number.isFinite(back)) return 0;
+  const diff = front - back;
+  return Math.abs(diff) < (box.max.y - box.min.y) * 0.04 ? 0 : Math.sign(diff);
+}
+
+/**
+ * Orient (length → X, toe → +X), pitch, scale to `targetLength` and ground an
+ * arbitrary model so that its footprint is centred on the origin and its
+ * lowest point rests on y = 0. Returns the wrapper and its final size.
+ */
+function normalizeProduct(object, targetLength, pitch) {
+  const orient = new THREE.Group();
+  orient.name = 'orient';
+  orient.add(object);
+  const holder = new THREE.Group();
+  holder.name = 'product';
+  holder.add(orient);
+
+  const box = new THREE.Box3();
+  const size = new THREE.Vector3();
+  const measure = () => {
+    holder.updateMatrixWorld(true);
+    box.setFromObject(holder, true);
+    if (box.isEmpty()) throw new Error('the model has no measurable geometry');
+    box.getSize(size);
+  };
+
+  measure();
+  if (size.z > size.x * 1.15) { orient.rotation.y = Math.PI / 2; measure(); }   // length along X
+  if (heelSign(holder, box) > 0) orient.rotation.y += Math.PI;                  // toe toward +X
+  holder.rotation.z = pitch;
+  measure();
+  holder.scale.setScalar(targetLength / Math.max(size.x, size.z, 1e-6));
+  measure();
+  const center = box.getCenter(new THREE.Vector3());
+  holder.position.set(-center.x, -box.min.y, -center.z);
+  return { holder, size: size.clone() };
+}
+
+function prepareMaterial(material, maxAniso) {
+  if (!material || material.userData.aeroReady) return material;
+  material.userData.aeroReady = true;
+  for (const slot of TEXTURE_SLOTS) {
+    const tex = material[slot];
+    if (tex && tex.isTexture && tex.anisotropy < maxAniso) { tex.anisotropy = maxAniso; tex.needsUpdate = true; }
+  }
+  return material;
+}
+
+/** Map glTF variant names onto curated palettes (unknown names get a cycled palette). */
+function colorwaysForVariants(names) {
+  return names.map((name, i) => {
+    const key = name.trim().toLowerCase();
+    const known = COLORWAYS.find((c) => c.variant === key || c.id === key || c.label.toLowerCase() === key);
+    if (known) return { ...known, variant: name };
+    return { ...COLORWAYS[i % COLORWAYS.length], id: `variant-${i}`, label: titleCase(name), variant: name };
+  });
+}
+
+function createStudio(canvas, hooks = {}) {
+  const emit = (name, ...args) => { const fn = hooks[name]; if (typeof fn === 'function') fn(...args); };
+
+  /* ── renderer ───────────────────────────────────────────────────────── */
+  const renderer = new THREE.WebGLRenderer({
+    canvas, antialias: true, alpha: true, stencil: false, powerPreference: 'high-performance',
+  });
+  renderer.setClearColor(0x000000, 0);                 // the CSS backdrop is the studio wall
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.NeutralToneMapping;     // Khronos PBR Neutral keeps colorway hues true
+  renderer.toneMappingExposure = CONFIG.exposure;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.VSMShadowMap;        // blurred variance map → genuinely soft shadow
+  const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+
+  const constrained = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+  const startDpr = (cap) => (constrained ? Math.min(cap, 1.5) : cap);
+  let dprCap = Math.min(window.devicePixelRatio || 1, CONFIG.maxDpr);
+  let dpr = startDpr(dprCap);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(CONFIG.fov, 1, 0.05, 80);
+
+  let envTarget = buildStudioEnvironment(renderer);
+  scene.environment = envTarget.texture;
+  scene.environmentIntensity = CONFIG.envIntensity;
+
+  /* ── lights ─────────────────────────────────────────────────────────── */
+  const hemi = new THREE.HemisphereLight(0xb4ccff, 0x06070b, 0.45);   // ground colour = colorway under-glow
+  const key  = new THREE.DirectionalLight(0xfff1e2, 2.3);         // warm key (shading only)
+  // Overhead softbox, a touch behind the product: its shadow falls forward into
+  // view, the way a product photographer places the light for a floating shot.
+  const shade = new THREE.DirectionalLight(0xffffff, 0.65);
+  shade.castShadow = true;
+  shade.shadow.mapSize.set(CONFIG.shadowMapSize, CONFIG.shadowMapSize);
+  shade.shadow.radius = CONFIG.shadowRadius;
+  shade.shadow.blurSamples = 16;
+  shade.shadow.bias = -0.0008;
+  shade.shadow.normalBias = 0.02;
+  const rim  = new THREE.DirectionalLight(0x4d8dff, 3.0);         // cool edge light, retinted per colorway
+  rim.position.set(-4.4, 2.7, -4.2);
+  const kick = new THREE.DirectionalLight(0xffd9c2, 0.6);         // low warm kicker across the toe box
+  kick.position.set(-3.6, 0.9, 3.1);
+  const top  = new THREE.SpotLight(0xffffff, 30, 16, 0.5, 1, 2);  // overhead pool
+  top.position.set(0.35, 6.2, 0.55);
+  scene.add(hemi, key, key.target, shade, shade.target, rim, kick, top, top.target);
+
+  /* ── floor stack (all transparent, depth-tested, never depth-written) ── */
+  const floor = new THREE.Group();
+  floor.name = 'floor';
+  scene.add(floor);
+  const lay = (mesh, y, order) => {
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = y;
+    mesh.renderOrder = order;
+    floor.add(mesh);
+    return mesh;
+  };
+  const fxMaterial = (options) => new THREE.MeshBasicMaterial({
+    transparent: true, depthWrite: false, toneMapped: false, ...options });
+
+  const floorMat = new THREE.MeshStandardMaterial({
+    color: 0x0b0d14, roughness: 0.38, metalness: 0.45, map: TEX.floorFade(),
+    transparent: true, depthWrite: false, envMap: envTarget.texture, envMapIntensity: 0.55 });
+  const floorDisc = lay(new THREE.Mesh(new THREE.CircleGeometry(1, 96), floorMat), 0, 1);
+
+  const poolMat = fxMaterial({ map: TEX.pool(), color: 0x9fcaff, opacity: 0.3, blending: THREE.AdditiveBlending });
+  const pool = lay(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), poolMat), 0.002, 2);  // lit stage the shadows read against
+
+  const catcherMat = new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.62, depthWrite: false });
+  const catcher = lay(new THREE.Mesh(new THREE.CircleGeometry(1, 72), catcherMat), 0.004, 3);
+  catcher.receiveShadow = true;
+
+  const footprint = new THREE.Group();                 // contact shadow follows the turntable yaw
+  floor.add(footprint);
+  const contactMat = fxMaterial({ map: TEX.contact(), opacity: 0.84 });
+  const contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), contactMat);
+  contact.rotation.x = -Math.PI / 2;
+  contact.position.y = 0.006;
+  contact.renderOrder = 4;
+  footprint.add(contact);
+
+  const ringMat = fxMaterial({ map: sweepTexture(), color: 0x5ea8ff, opacity: 0.5, blending: THREE.AdditiveBlending });
+  const ring = lay(new THREE.Mesh(new THREE.RingGeometry(0.986, 1, 192, 1), ringMat), 0.008, 5);
+  const haloMat = fxMaterial({ color: 0x5ea8ff, opacity: 0.08, blending: THREE.AdditiveBlending });
+  const halo = lay(new THREE.Mesh(new THREE.RingGeometry(0.993, 1, 192, 1), haloMat), 0.008, 5);
+
+  /* ── product rig: rig (hover · bob · pointer tilt) → turntable (yaw) → product ── */
+  const rig = new THREE.Group();
+  rig.name = 'rig';
+  const turntable = new THREE.Group();
+  turntable.name = 'turntable';
+  rig.add(turntable);
+  scene.add(rig);
+
+  /* ── state ──────────────────────────────────────────────────────────── */
+  const reducedAtStart = prefersReducedMotion();
+  const S = {
+    reduced: reducedAtStart, auto: !reducedAtStart, dir: 1,
+    spin: CONFIG.restSpin, vel: 0, dragVel: 0,
+    elev: 0, elevTarget: 0,
+    zoom: CONFIG.zoom.default, zoomTarget: CONFIG.zoom.default,
+    viewZoom: 1, viewZoomTarget: 1, viewElev: 0, viewElevTarget: 0,
+    px: 0, py: 0, pxTarget: 0, pyTarget: 0,
+    dragging: false, resetting: false, resetTarget: 0, lastInput: -Infinity,
+    intro: 1, introRunning: false,
+    time: 0, bobLevel: reducedAtStart ? 0 : 1, pulse: 0,
+  };
+  const M   = { ready: false, size: new THREE.Vector3(CONFIG.targetLength, 1, 1), hover: 0, bobAmp: 0, ringR: 1.6 };
+  const fit = { base: 8, kx: 0, ky: 0, centerY: 0.5 };   // solved framing
+  const cam = { base: 8, kx: 0, ky: 0 };                  // damped copy (smooth resizes)
+  const right  = new THREE.Vector3(Math.cos(CONFIG.azimuth), 0, -Math.sin(CONFIG.azimuth));
+  const lookAt = new THREE.Vector3();
+  const BOB_W  = TAU / CONFIG.bobPeriod;
+  const VIEW_PRESETS = {
+    overview: { zoom: 1.00, elev: 0.00 },
+    tech    : { zoom: 1.08, elev: 0.12 },   // a higher, closer look at the upper
+    color   : { zoom: 0.97, elev: 0.03 },
+  };
+  let zone = ZONES.wide, customZone = null, lastW = 0, lastH = 0;
+  let product = null, procedural = null, parser = null, variants = null, mixer = null;
+  let mode = 'lighting', colorways = COLORWAYS.slice(), switchToken = 0;
+  let running = false, disposed = false, contextLost = false, calm = 0;
+  const variantCache = new Map();
+  const decoderCleanups = [];
+
+  /* ── colorway lighting (lerped in linear space) ─────────────────────── */
+  const theme = {
+    now: { rim: new THREE.Color(0x4d8dff), ground: new THREE.Color(0x0a1430), accent: new THREE.Color(0x5ea8ff), key: new THREE.Color(0xfff1e2) },
+    to : { rim: new THREE.Color(0x4d8dff), ground: new THREE.Color(0x0a1430), accent: new THREE.Color(0x5ea8ff), key: new THREE.Color(0xfff1e2) },
+    active: false,
+  };
+  function applyThemeColors() {
+    rim.color.copy(theme.now.rim);
+    hemi.groundColor.copy(theme.now.ground);
+    key.color.copy(theme.now.key);
+    poolMat.color.copy(theme.now.accent).lerp(WHITE, 0.55);
+    ringMat.color.copy(theme.now.accent);
+    haloMat.color.copy(theme.now.accent);
+  }
+  function setTheme(cw, instant) {
+    theme.to.rim.set(cw.rim);
+    theme.to.ground.set(cw.under).multiplyScalar(0.32);
+    theme.to.accent.set(cw.accent);
+    theme.to.key.set(cw.key);
+    if (instant) {
+      for (const name in theme.to) theme.now[name].copy(theme.to[name]);
+      applyThemeColors();
+      theme.active = false;
+    } else {
+      theme.active = true;
+    }
+  }
+  function stepTheme(dt) {
+    if (!theme.active) return;
+    const k = 1 - Math.exp(-dt * 4.2);
+    let moving = false;
+    for (const name in theme.to) {
+      const c = theme.now[name], t = theme.to[name];
+      c.lerp(t, k);
+      if (Math.abs(c.r - t.r) + Math.abs(c.g - t.g) + Math.abs(c.b - t.b) > 0.003) moving = true;
+      else c.copy(t);
+    }
+    applyThemeColors();
+    theme.active = moving;
+  }
+
+  /* ── layout + framing ───────────────────────────────────────────────── */
+  function layoutStage() {
+    const { x: L, y: H, z: W } = M.size;
+    M.ringR = 0.5 * Math.hypot(L, W) * 1.1;
+    floorDisc.scale.setScalar(L * 3.2);
+    catcher.scale.setScalar(L * 1.6);
+    pool.scale.setScalar(L * 2.4);
+    contact.position.x = L * 0.03;                     // toe-down pose sits a touch forward
+    // key aims at the product; the shadow frustum hugs the product's bounding sphere
+    const centreY = H / 2 + M.hover;
+    const r = 0.5 * Math.hypot(L, H + M.hover * 2, W) * 1.25;
+    key.target.position.set(0, centreY, 0);
+    key.position.copy(key.target.position).addScaledVector(KEY_DIR, 9);
+    shade.target.position.set(0, centreY, 0);
+    shade.position.copy(shade.target.position).addScaledVector(SHADE_DIR, 9);
+    const sc = shade.shadow.camera;
+    sc.left = -r; sc.right = r; sc.top = r; sc.bottom = -r;
+    sc.near = Math.max(0.1, 9 - r * 2);
+    sc.far = 9 + r * 3;
+    sc.updateProjectionMatrix();
+  }
+
+  function solveFrame() {
+    // Vertical fit uses the box as the pitched camera actually sees it:
+    // the turning footprint adds depth·sin(elevation) on screen.
+    const worldH = M.size.y + M.hover + M.bobAmp;
+    const el = CONFIG.elevation;
+    const projH = worldH * Math.cos(el) + Math.hypot(M.size.x, M.size.z) * Math.sin(el);
+    const sol = solveFraming({ x: M.size.x, y: projH, z: M.size.z }, camera.fov, camera.aspect, zone);
+    fit.base = sol.distance;
+    fit.centerY = worldH / 2;
+    fit.kx = sol.target.x / sol.distance;               // zone offsets scale with distance
+    fit.ky = (sol.target.y - projH / 2) / sol.distance;
+  }
+
+  function applyFrame(dt) {
+    const ei = S.intro >= 1 ? 1 : easeOutCubic(S.intro);
+    const ex = S.intro >= 1 ? 1 : easeOutExpo(S.intro);
+    if (dt > 0) {
+      cam.base = damp(cam.base, fit.base, 5, dt);
+      cam.kx = damp(cam.kx, fit.kx, 5, dt);
+      cam.ky = damp(cam.ky, fit.ky, 5, dt);
+    } else {
+      cam.base = fit.base; cam.kx = fit.kx; cam.ky = fit.ky;
+    }
+
+    // camera: framed distance → user zoom → view preset → intro dolly
+    const d = (cam.base / (S.zoom * S.viewZoom)) * (1 + 0.3 * (1 - ei));
+    const tx = cam.kx * d;
+    const el = CONFIG.elevation + S.elev + S.viewElev;
+    const az = CONFIG.azimuth;
+    lookAt.set(right.x * tx, fit.centerY + cam.ky * d, right.z * tx);
+    camera.position.set(
+      lookAt.x + d * Math.cos(el) * Math.sin(az),
+      lookAt.y + d * Math.sin(el),
+      lookAt.z + d * Math.cos(el) * Math.cos(az));
+    camera.position.addScaledVector(right, S.px * CONFIG.parallax);   // mouse parallax
+    camera.position.y += S.py * CONFIG.parallax * 0.6;
+    camera.lookAt(lookAt);
+
+    // product: turntable yaw (+ pointer nudge), hover + bob, tilt toward the pointer
+    const yaw = S.spin + S.px * 0.1 - 1.25 * (1 - ex);
+    turntable.rotation.y = yaw;
+    footprint.rotation.y = yaw;
+    const wave = Math.sin(S.time * BOB_W);
+    rig.position.y = M.size.y / 2 + M.hover + wave * M.bobAmp * S.bobLevel + (1 - ei) * M.size.y * 0.2;
+    rig.quaternion.setFromAxisAngle(right, S.py * CONFIG.tiltRange);
+
+    // floor: the shadow tightens as the shoe dips; pool + ring answer to pulses
+    const lift = 0.5 + 0.5 * wave * S.bobLevel;        // 0 = lowest point of the bob
+    const spread = 1 + 0.07 * lift;
+    contact.scale.set(M.size.x * 1.24 * spread, M.size.z * 2.6 * spread, 1);
+    contactMat.opacity = (0.84 - 0.2 * lift) * ei;
+    catcherMat.opacity = 0.62 * ei;
+    poolMat.opacity = (0.42 + 0.3 * S.pulse) * ei;
+    ringMat.opacity = (0.5 + 0.5 * S.pulse) * ei;
+    haloMat.opacity = (0.08 + 0.1 * S.pulse) * ei;
+    ring.scale.setScalar(M.ringR * (0.82 + 0.18 * ei) * (1 + 0.1 * S.pulse));
+    halo.scale.setScalar(M.ringR * 1.17 * (1 + 0.04 * S.pulse));
+    ring.rotation.z -= dt * (0.35 + 1.6 * S.pulse);
+  }
+
+  /* ── simulation step ────────────────────────────────────────────────── */
+  function step(dt) {
+    const now = performance.now();
+    S.time += dt;
+    if (S.introRunning) {
+      S.intro = Math.min(1, S.intro + dt / CONFIG.introDuration);
+      if (S.intro >= 1) S.introRunning = false;
+    }
+    const idle = now - S.lastInput > CONFIG.idleResume;
+
+    if (S.resetting) {
+      S.spin = damp(S.spin, S.resetTarget, 4.2, dt);
+      S.vel = 0;
+      if (near(S.spin, S.resetTarget, 1e-3)) { S.spin = S.resetTarget; S.resetting = false; }
+    } else if (!S.dragging) {
+      const cruise = S.auto && idle;
+      S.vel = damp(S.vel, cruise ? CONFIG.autoSpeed * S.dir : 0, cruise ? 0.9 : 2.4, dt);
+      if (!cruise && Math.abs(S.vel) < 1e-4) S.vel = 0;
+      S.spin += S.vel * dt;
+      if (Math.abs(S.spin) > TAU * 64) S.spin = wrapAngle(S.spin);   // keep float precision
+    }
+
+    if (idle && !S.dragging) {
+      S.elevTarget = damp(S.elevTarget, 0, 1.1, dt);
+      if (Math.abs(S.elevTarget) < 1e-4) S.elevTarget = 0;
+    }
+    S.elev     = damp(S.elev, S.elevTarget, 6, dt);
+    S.zoom     = damp(S.zoom, S.zoomTarget, 7, dt);
+    S.viewZoom = damp(S.viewZoom, S.viewZoomTarget, 3, dt);
+    S.viewElev = damp(S.viewElev, S.viewElevTarget, 3, dt);
+    const follow = S.reduced ? 0 : 1;
+    S.px = damp(S.px, S.pxTarget * follow, 3.4, dt);
+    S.py = damp(S.py, S.pyTarget * follow, 3.4, dt);
+    S.bobLevel = damp(S.bobLevel, S.auto && !S.reduced ? 1 : 0, 1.4, dt);
+    if (S.bobLevel < 1e-4) S.bobLevel = 0;
+    S.pulse = S.pulse > 1e-3 ? damp(S.pulse, 0, 2.3, dt) : 0;
+    stepTheme(dt);
+    if (mixer) mixer.update(dt);
+    applyFrame(dt);
+    emit('parallax', S.px, S.py);
+  }
+
+  /** True when nothing would change on screen — the loop then sleeps until input. */
+  function isSettled() {
+    if (!M.ready || S.auto || S.dragging || S.resetting || S.introRunning || theme.active || mixer) return false;
+    const follow = S.reduced ? 0 : 1;
+    return S.vel === 0 && S.bobLevel === 0 && S.pulse === 0 && S.elevTarget === 0 &&
+      near(S.zoom, S.zoomTarget) && near(S.elev, 0) &&
+      near(S.viewZoom, S.viewZoomTarget) && near(S.viewElev, S.viewElevTarget) &&
+      near(S.px, S.pxTarget * follow, 1e-3) && near(S.py, S.pyTarget * follow, 1e-3) &&
+      near(cam.base, fit.base, 1e-3) && near(cam.kx, fit.kx) && near(cam.ky, fit.ky);
+  }
+
+  /* ── loop ───────────────────────────────────────────────────────────── */
+  const timer = new THREE.Timer();
+  timer.connect(document);                  // Page Visibility aware: no giant deltas after a tab switch
+
+  function tick() {
+    timer.update();
+    const raw = timer.getDelta();
+    const dt = Math.min(Math.max(raw, 0), 1 / 20);
+    step(dt);
+    renderer.render(scene, camera);
+    monitor(raw);
+    if (isSettled()) { if (++calm > 2) halt(); } else calm = 0;
+  }
+  function wake() {
+    calm = 0;
+    if (running || disposed || contextLost || !M.ready) return;
+    running = true;
+    timer.reset();
+    renderer.setAnimationLoop(tick);
+  }
+  function halt() {
+    if (!running) return;
+    running = false;
+    renderer.setAnimationLoop(null);
+  }
+
+  /* ── adaptive resolution: hold the frame rate, then claw back sharpness ── */
+  const perf = { frames: 0, time: 0, cooldown: 3, peak: 0, slow: 0, upgrades: 0, reduced: false };
+  function setDpr(value) {
+    dpr = value;
+    renderer.setPixelRatio(dpr);
+  }
+  function monitor(raw) {
+    if (!(raw > 0) || raw > 0.25) return;    // skip stalls and resumed tabs
+    perf.frames++;
+    perf.time += raw;
+    if (perf.time < 1.25) return;
+    const fps = perf.frames / perf.time;
+    perf.frames = 0;
+    perf.time = 0;
+    perf.peak = Math.max(perf.peak * 0.97, fps);      // tracks the display refresh rate
+    const target = Math.min(60, perf.peak);
+    if (perf.cooldown > 0) { perf.cooldown--; return; }
+    if (fps < target * 0.74 && dpr > 1) {
+      setDpr(Math.max(1, dpr - 0.25));
+      perf.cooldown = 2;
+    } else if (fps > target * 0.96 && dpr < dprCap - 0.01 && perf.upgrades < 3) {
+      setDpr(Math.min(dprCap, dpr + 0.25));
+      perf.upgrades++;
+      perf.cooldown = 5;
+    }
+    if (fps < target * 0.5 && dpr <= 1) {
+      if (++perf.slow >= 2 && !perf.reduced) {
+        perf.reduced = true;
+        shade.shadow.blurSamples = 8;
+        emit('reduceFx', true);
+      }
+    } else {
+      perf.slow = 0;
+    }
+  }
+
+  /* ── resize ─────────────────────────────────────────────────────────── */
+  function resize(force = false) {
+    const w = Math.max(1, Math.round(canvas.clientWidth || window.innerWidth));
+    const h = Math.max(1, Math.round(canvas.clientHeight || window.innerHeight));
+    const cap = Math.min(window.devicePixelRatio || 1, CONFIG.maxDpr);
+    if (cap !== dprCap) { dprCap = cap; dpr = startDpr(cap); perf.upgrades = 0; }
+    if (!force && w === lastW && h === lastH && renderer.getPixelRatio() === dpr) return;
+    lastW = w;
+    lastH = h;
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    zone = customZone || zoneFor(w, h);
+    if (M.ready && !contextLost) {
+      solveFrame();
+      applyFrame(0);
+      renderer.render(scene, camera);                 // no stretched frame while resizing
+    }
+    wake();
+  }
+  function setZone(next) {
+    customZone = next && next.fx > 0 && next.fy > 0 ? next : null;
+    zone = customZone || zoneFor(lastW || window.innerWidth, lastH || window.innerHeight);
+    if (M.ready) solveFrame();
+    wake();
+  }
+
+  /* ── input ──────────────────────────────────────────────────────────── */
+  const ac = new AbortController();
+  const on = (target, type, fn, options = {}) =>
+    target.addEventListener(type, fn, { ...options, signal: ac.signal });
+  const touch = () => { S.lastInput = performance.now(); wake(); };
+  const pointers = new Map();
+  let last = null, pinch = null, press = null, lastTap = null, lastPointerType = 'mouse';
+  const spread = () => {
+    const [a, b] = [...pointers.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
+  on(canvas, 'pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    try { canvas.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    lastPointerType = e.pointerType;
+    press = pointers.size === 1 ? { x: e.clientX, y: e.clientY, t: e.timeStamp } : null;
+    S.resetting = false;
+    if (pointers.size === 1) {
+      S.dragging = true;
+      S.dragVel = 0;
+      S.vel = 0;
+      last = { x: e.clientX, y: e.clientY, t: e.timeStamp };
+      canvas.classList.add('is-dragging');
+    } else if (pointers.size === 2) {
+      pinch = { d: Math.max(1, spread()), zoom: S.zoomTarget };
+    }
+    touch();
+  });
+  on(canvas, 'pointermove', (e) => {
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    p.x = e.clientX;
+    p.y = e.clientY;
+    if (pointers.size >= 2 && pinch) {
+      S.zoomTarget = clamp(pinch.zoom * spread() / pinch.d, CONFIG.zoom.min, CONFIG.zoom.max);
+    } else if (last) {
+      const dx = e.clientX - last.x, dy = e.clientY - last.y;
+      const ms = Math.max(1, e.timeStamp - last.t);
+      S.spin += dx * CONFIG.dragScale;
+      S.elevTarget = clamp(S.elevTarget + dy * CONFIG.dragScale * 0.5, -0.11, 0.36);
+      S.dragVel = lerp(S.dragVel, (dx * CONFIG.dragScale) / (ms / 1000), 0.35);
+      last.x = e.clientX; last.y = e.clientY; last.t = e.timeStamp;
+    }
+    touch();
+  });
+  const release = (e) => {
+    if (!pointers.delete(e.pointerId)) return;
+    if (pointers.size === 1) {                        // pinch → one-finger drag
+      const [rest] = pointers.values();
+      last = { x: rest.x, y: rest.y, t: e.timeStamp };
+      pinch = null;
+      return;
+    }
+    if (pointers.size === 0) {
+      // touch double-tap → reset (iOS never synthesises dblclick for touch)
+      const tapped = e.type === 'pointerup' && e.pointerType !== 'mouse' && press &&
+        e.timeStamp - press.t < 280 && Math.hypot(e.clientX - press.x, e.clientY - press.y) < 12;
+      if (tapped) {
+        if (lastTap && e.timeStamp - lastTap.t < 340 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 36) {
+          lastTap = null;
+          S.dragging = false; last = null; pinch = null; press = null;
+          canvas.classList.remove('is-dragging');
+          reset();
+          return;
+        }
+        lastTap = { x: e.clientX, y: e.clientY, t: e.timeStamp };
+      }
+      press = null;
+      const flick = last && e.timeStamp - last.t < 90;
+      S.vel = flick ? clamp(S.dragVel, -7, 7) : 0;     // inertia only for a real flick
+      if (Math.abs(S.vel) > 0.05) S.dir = Math.sign(S.vel);
+      S.dragging = false;
+      last = null;
+      pinch = null;
+      canvas.classList.remove('is-dragging');
+      touch();
+    }
+  };
+  on(canvas, 'pointerup', release);
+  on(canvas, 'pointercancel', release);
+  on(canvas, 'lostpointercapture', release);
+  on(canvas, 'wheel', (e) => {
+    e.preventDefault();
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
+    S.zoomTarget = clamp(S.zoomTarget * Math.exp(-e.deltaY * unit * 0.0011), CONFIG.zoom.min, CONFIG.zoom.max);
+    touch();
+  }, { passive: false });
+  on(canvas, 'dblclick', () => { if (lastPointerType === 'mouse') reset(); });
+
+  // Mouse-tracking parallax reads the whole window, not just the canvas.
+  on(window, 'pointermove', (e) => {
+    if (e.pointerType !== 'mouse' || S.reduced) return;
+    S.pxTarget = clamp((e.clientX / window.innerWidth) * 2 - 1, -1, 1);
+    S.pyTarget = clamp(1 - (e.clientY / window.innerHeight) * 2, -1, 1);
+    wake();
+  }, { passive: true });
+  const recentre = () => { S.pxTarget = 0; S.pyTarget = 0; wake(); };
+  on(document.documentElement, 'mouseleave', recentre);
+  on(window, 'blur', recentre);
+
+  on(canvas, 'webglcontextlost', (e) => {
+    e.preventDefault();
+    contextLost = true;
+    halt();
+    emit('contextlost');
+  });
+  on(canvas, 'webglcontextrestored', () => {
+    contextLost = false;
+    envTarget.dispose();                              // render-target contents do not survive a loss
+    envTarget = buildStudioEnvironment(renderer);
+    scene.environment = envTarget.texture;
+    floorMat.envMap = envTarget.texture;
+    floorMat.needsUpdate = true;
+    emit('contextrestored');
+    resize(true);
+  });
+
+  const ro = new ResizeObserver(() => resize());
+  ro.observe(canvas);
+  on(window, 'resize', () => resize());               // DPR changes (browser zoom, display swap)
+  resize(true);
+
+  /* ── loading ────────────────────────────────────────────────────────── */
+  async function loadGltf(url) {
+    const absolute = new URL(url, document.baseURI).href;
+    const buffer = await fetchWithProgress(absolute,
+      (p) => emit('progress', 0.06 + p * 0.72, `Downloading ${url}`));
+    emit('progress', 0.8, 'Decoding model');
+    const used = sniffGltfExtensions(buffer);
+    const loader = new GLTFLoader();
+    if (used.has('KHR_draco_mesh_compression')) {
+      const { DRACOLoader } = await import('three/addons/loaders/DRACOLoader.js');
+      const draco = new DRACOLoader().setDecoderPath(`${CONFIG.cdn}/examples/jsm/libs/draco/gltf/`);
+      loader.setDRACOLoader(draco);
+      decoderCleanups.push(() => draco.dispose());
+    }
+    if (used.has('EXT_meshopt_compression') || used.has('KHR_meshopt_compression')) {
+      const { MeshoptDecoder } = await import('three/addons/libs/meshopt_decoder.module.js');
+      await MeshoptDecoder.ready;
+      loader.setMeshoptDecoder(MeshoptDecoder);
+    }
+    if (used.has('KHR_texture_basisu')) {
+      const { KTX2Loader } = await import('three/addons/loaders/KTX2Loader.js');
+      const ktx2 = new KTX2Loader().setTranscoderPath(`${CONFIG.cdn}/examples/jsm/libs/basis/`);
+      ktx2.detectSupport(renderer);
+      loader.setKTX2Loader(ktx2);
+      decoderCleanups.push(() => ktx2.dispose());
+    }
+    return loader.parseAsync(buffer, THREE.LoaderUtils.extractUrlBase(absolute));
+  }
+
+  function mount(root) {
+    // Lights or cameras authored into an asset would fight the studio rig.
+    const strays = [];
+    root.traverse((o) => { if (o.isLight || o.isCamera) strays.push(o); });
+    strays.forEach((o) => o.removeFromParent());
+
+    const { holder, size } = normalizeProduct(root, CONFIG.targetLength, CONFIG.pitch);
+    holder.traverse((o) => {
+      if (!o.isMesh) return;
+      o.castShadow = true;
+      o.receiveShadow = false;           // baked AO covers self-occlusion and keeps VSM acne-free
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => prepareMaterial(m, maxAniso));
+    });
+    holder.position.y -= size.y / 2;     // rig pivots about the product's vertical centre
+    if (product) turntable.remove(product);
+    product = holder;
+    turntable.add(holder);
+
+    M.size.copy(size);
+    M.hover = CONFIG.targetLength * CONFIG.hover;
+    M.bobAmp = CONFIG.targetLength * CONFIG.bob;
+    layoutStage();
+    solveFrame();
+    cam.base = fit.base; cam.kx = fit.kx; cam.ky = fit.ky;
+    M.ready = true;
+  }
+
+  async function load(url) {
+    try {
+      const gltf = await loadGltf(url);
+      const root = gltf.scene || (gltf.scenes && gltf.scenes[0]);
+      if (!root) throw new Error('the file contains no scene');
+      parser = gltf.parser;
+      variants = collectVariants(gltf);
+      mount(root);
+      if (gltf.animations && gltf.animations.length) {
+        mixer = new THREE.AnimationMixer(root);
+        gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+      }
+      mode = variants ? 'variants' : 'lighting';
+      colorways = variants ? colorwaysForVariants(variants.names) : COLORWAYS.slice();
+      return { source: 'glb', mode, colorways };
+    } catch (error) {
+      emit('progress', 0.84, 'Generating studio model');
+      procedural = buildShowcaseSneaker(COLORWAYS[0]);
+      mount(procedural);
+      mode = 'procedural';
+      colorways = COLORWAYS.slice();
+      return { source: 'procedural', mode, colorways, error };
+    }
+  }
+
+  /* ── colorways ──────────────────────────────────────────────────────── */
+  function resolveVariant(name) {
+    if (!variantCache.has(name)) {
+      const job = Promise.all(variants.entries.map(async (entry) => {
+        const index = entry.byName[name];
+        const material = index === undefined ? entry.base : await parser.getDependency('material', index);
+        return [entry, prepareMaterial(material, maxAniso)];
+      }));
+      job.catch(() => variantCache.delete(name));    // allow a retry after a failed fetch
+      variantCache.set(name, job);
+    }
+    return variantCache.get(name);
+  }
+
+  async function setColorway(index, { instant = false } = {}) {
+    const cw = colorways[index];
+    if (!cw) return;
+    const token = ++switchToken;
+    setTheme(cw, instant);
+    if (mode === 'variants') {
+      const pairs = await resolveVariant(cw.variant);
+      if (token !== switchToken || disposed) return;  // a newer selection won the race
+      for (const [entry, material] of pairs) {
+        entry.mesh.material = material;
+        parser.assignFinalMaterial(entry.mesh);
+      }
+    } else if (mode === 'procedural' && procedural) {
+      procedural.userData.tint(cw);
+    }
+    if (!instant) {
+      S.pulse = Math.max(S.pulse, 0.7);
+      if (!S.dragging && !S.reduced) S.vel += 2.0 * S.dir;   // a quick whirl sells the swap
+    }
+    wake();
+  }
+
+  /** Decode + upload every variant's textures in idle time so the first switch never hitches. */
+  function warmVariants() {
+    if (mode !== 'variants') return;
+    const run = async () => {
+      for (const cw of colorways) {
+        try {
+          const pairs = await resolveVariant(cw.variant);
+          if (disposed || contextLost) return;
+          for (const [, material] of pairs) {
+            for (const slot of TEXTURE_SLOTS) {
+              const tex = material[slot];
+              if (tex && tex.isTexture) renderer.initTexture(tex);
+            }
+          }
+        } catch {
+          /* reported if and when the shopper selects that colorway */
+        }
+      }
+    };
+    if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 2500 });
+    else setTimeout(run, 700);
+  }
+
+  /* ── public API ─────────────────────────────────────────────────────── */
+  async function prepare() {
+    resize(true);
+    applyFrame(0);
+    try {
+      if (renderer.extensions.has('KHR_parallel_shader_compile')) await renderer.compileAsync(scene, camera);
+      else renderer.compile(scene, camera);
+    } catch { /* falls back to compile-on-draw */ }
+    renderer.render(scene, camera);
+  }
+  function start() {
+    S.intro = S.reduced ? 1 : 0;
+    S.introRunning = !S.reduced;
+    S.lastInput = -Infinity;
+    wake();
+    warmVariants();
+  }
+  function setAuto(on) {
+    S.auto = !!on;
+    if (S.auto) S.lastInput = -Infinity;
+    emit('auto', S.auto);
+    wake();
+    return S.auto;
+  }
+  function setReducedMotion(on) {
+    S.reduced = !!on;
+    if (S.reduced) { S.auto = false; S.pxTarget = 0; S.pyTarget = 0; }
+    emit('auto', S.auto);
+    wake();
+  }
+  function setView(name) {
+    const preset = VIEW_PRESETS[name] || VIEW_PRESETS.overview;
+    S.viewZoomTarget = preset.zoom;
+    S.viewElevTarget = preset.elev;
+    wake();
+  }
+  function reset() {
+    S.resetting = true;
+    S.resetTarget = S.spin + wrapAngle(CONFIG.restSpin - S.spin);   // shortest way home
+    S.zoomTarget = CONFIG.zoom.default;
+    S.elevTarget = 0;
+    touch();
+  }
+  function nudge(delta) { S.resetting = false; S.vel += delta * 2.4; touch(); }
+  function orbit(delta) { S.elevTarget = clamp(S.elevTarget + delta, -0.11, 0.36); touch(); }
+  function zoomBy(factor) {
+    S.zoomTarget = clamp(S.zoomTarget * factor, CONFIG.zoom.min, CONFIG.zoom.max);
+    touch();
+  }
+  function celebrate() {
+    S.pulse = 1;
+    if (!S.reduced) S.vel += 3.2 * S.dir;
+    wake();
+  }
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    halt();
+    ac.abort();
+    ro.disconnect();
+    timer.dispose();
+    decoderCleanups.forEach((fn) => fn());
+    envTarget.dispose();
+    scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+    renderer.dispose();
+    renderer.forceContextLoss();                      // hand the GPU context back immediately
+  }
+
+  return {
+    load, prepare, start, setColorway, setZone, setView, setAuto, setReducedMotion,
+    reset, nudge, orbit, zoomBy, celebrate, dispose,
+    get auto() { return S.auto; },
+  };
+}
+
+/* ═══ 7 · INTERFACE + BOOT ══════════════════════════════════════════════════ */
+
+const PRODUCT   = Object.freeze({ price: 248, stock: 128, edition: 500 });
+const STORE_KEY = 'aeroglide:reservation:v1';
+
+const ui = {
+  canvas: $('#stage'), backdrop: $('.backdrop'),
+  topbar: $('.topbar'), hero: $('#panel-hero'), rail: $('#panel-rail'), dock: $('#panel-dock'),
+  loader: $('#loader'), loadFill: $('#loadFill'), loadStage: $('#loadStage'), loadPct: $('#loadPct'),
+  toasts: $('#toasts'), fatal: $('#fatal'), fatalTitle: $('#fatal h2'), fatalMsg: $('#fatalMsg'),
+  tablist: $('.segbar'), tabs: $$('[data-view-target]'), segThumb: $('#segThumb'),
+  spin: $('#btnSpin'), reset: $('#btnReset'), zoomIn: $('#btnZoomIn'), zoomOut: $('#btnZoomOut'),
+  preorder: $('#btnPreorder'), preorderLabel: $('#btnPreorder .btn__label'), tech: $('#btnTech'),
+  priceVal: $('#priceVal'), priceCents: $('#priceCents'), stockNum: $('#stockNum'),
+  railVariant: $('#railVariant'), sizes: $$('#sizes button'), colorways: $('#colorways'),
+  dockLabel: $('.dock__label'),
+};
+
+const ICONS = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  info : '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6h.01"/>',
+  bolt : '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>',
+  hand : '<path d="M9 11.5V6a1.6 1.6 0 0 1 3.2 0v5"/><path d="M12.2 11V9.4a1.5 1.5 0 0 1 3 0V11"/><path d="M15.2 11.4a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.4a6 6 0 0 1-4.6-2.1L4 15.6a1.6 1.6 0 0 1 2.4-2.1L9 16"/>',
+};
+
+const pad4 = (n) => String(n).padStart(4, '0');
+const storage = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) {
+    try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); }
+    catch { /* storage disabled: the reservation lives for this visit only */ }
+  },
+};
+
+let studio = null;
+let colorways = COLORWAYS.slice();
+let activeColorway = 0;
+let reservation = null;
+
+/* ── toasts ─────────────────────────────────────────────────────────────── */
+function toast(message, { icon = 'info', duration = 3800, action = null } = {}) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[icon] || ICONS.info}</svg>`;
+  const text = document.createElement('span');
+  text.textContent = message;
+  el.append(text);
+  let gone = false;
+  const dismiss = () => {
+    if (gone) return;
+    gone = true;
+    el.classList.add('is-out');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 700);              // reduced-motion: animationend may not fire
+  };
+  if (action) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toast__act';
+    btn.textContent = action.label;
+    btn.addEventListener('click', () => { action.run(); dismiss(); }, { once: true });
+    el.append(btn);
+  }
+  ui.toasts.append(el);
+  while (ui.toasts.children.length > 3) ui.toasts.firstElementChild.remove();
+  setTimeout(dismiss, duration);
+  return dismiss;
+}
+
+/* ── loader ─────────────────────────────────────────────────────────────── */
+let progressShown = 0;
+function setProgress(value, label) {
+  progressShown = Math.max(progressShown, clamp(value, 0, 1));
+  ui.loadFill.style.width = `${(progressShown * 100).toFixed(1)}%`;
+  ui.loadPct.textContent = `${Math.round(progressShown * 100)}%`;
+  if (label && ui.loadStage.textContent !== label) ui.loadStage.textContent = label;
+}
+
+function showFatal(title, message) {
+  ui.fatalTitle.textContent = title;
+  ui.fatalMsg.textContent = message;
+  ui.fatal.classList.add('is-on');
+  ui.loader.classList.add('is-hidden');
+}
+
+/* ── theme ──────────────────────────────────────────────────────────────── */
+function hexToRgb(hex) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function applyTheme(cw) {
+  const [r, g, b] = hexToRgb(cw.accent);
+  const s = document.documentElement.style;
+  s.setProperty('--accent', cw.accent);
+  s.setProperty('--accent-2', cw.accent2);
+  s.setProperty('--accent-soft', `rgba(${r},${g},${b},.16)`);
+  s.setProperty('--on-accent', `rgb(${Math.round(r * 0.09)},${Math.round(g * 0.09)},${Math.round(b * 0.09)})`);
+  ui.railVariant.textContent = cw.label;
+}
+
+/* ── colorways ──────────────────────────────────────────────────────────── */
+function renderColorways() {
+  ui.colorways.replaceChildren(...colorways.map((cw, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sw';
+    btn.dataset.index = String(i);
+    btn.style.setProperty('--c', cw.swatch);
+    btn.style.setProperty('--cs', cw.accent);
+    btn.setAttribute('aria-pressed', String(i === activeColorway));
+    btn.setAttribute('aria-label', `${cw.label} (${i + 1})`);
+    const name = document.createElement('span');
+    name.className = 'sw__name';
+    name.setAttribute('aria-hidden', 'true');
+    name.textContent = cw.label;
+    btn.append(name);
+    return btn;
+  }));
+}
+async function selectColorway(index) {
+  if (index === activeColorway || !colorways[index] || !studio) return;
+  activeColorway = index;
+  $$('.sw', ui.colorways).forEach((b, i) => b.setAttribute('aria-pressed', String(i === index)));
+  applyTheme(colorways[index]);
+  try {
+    await studio.setColorway(index);
+  } catch (error) {
+    console.warn('[AERO GLIDE] colorway failed to load', error);
+    toast(`The ${colorways[index].label} materials could not be loaded. Please try again.`);
+  }
+}
+
+/* ── views (tabs) ───────────────────────────────────────────────────────── */
+const narrowQuery = window.matchMedia('(max-width: 1180px)');
+function moveThumb() {
+  const active = ui.tabs.find((t) => t.getAttribute('aria-selected') === 'true');
+  if (!active || !active.offsetWidth) return;
+  ui.segThumb.style.width = `${active.offsetWidth}px`;
+  ui.segThumb.style.transform = `translateX(${active.offsetLeft - 3}px)`;
+}
+function setView(view, { focusTab = false } = {}) {
+  document.body.dataset.view = view;
+  for (const tab of ui.tabs) {
+    const on = tab.dataset.viewTarget === view;
+    tab.setAttribute('aria-selected', String(on));
+    tab.tabIndex = on ? 0 : -1;
+    if (on && focusTab) tab.focus();
+  }
+  ui.tech.setAttribute('aria-expanded', String(view === 'tech'));
+  moveThumb();
+  if (studio) studio.setView(view);
+  if (view === 'color' && !focusTab) {
+    const current = ui.colorways.querySelector('[aria-pressed="true"]');
+    if (current) current.focus({ preventScroll: true });
+  }
+}
+
+/* ── product framing follows the real glass layout ──────────────────────── */
+function measureStageZone() {
+  const W = window.innerWidth, H = window.innerHeight, gap = 14;
+  const box = (el) => {
+    if (!el) return null;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.position === 'fixed') return null;   // overlays never shrink the stage
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 ? r : null;
+  };
+  const top = (box(ui.topbar)?.bottom ?? 0) + gap;
+  let bottom = (box(ui.dock)?.top ?? H) - gap;
+  let left = gap, right = W - gap;
+  const hero = box(ui.hero);
+  if (hero) {
+    if (hero.width < W * 0.6) left = Math.max(left, hero.right + gap);  // side card
+    else bottom = Math.min(bottom, hero.top - gap);                     // stacked card (phones)
+  }
+  const rail = box(ui.rail);
+  if (rail && rail.left > W * 0.5) right = Math.min(right, rail.left - gap);
+  const w = right - left, h = bottom - top;
+  if (w < W * 0.28 || h < H * 0.22) return null;    // too cramped → aspect-based preset
+  return { cx: (left + right) / 2 / W, cy: (top + bottom) / 2 / H, fx: w / W, fy: h / H, pad: 1.04 };
+}
+let zoneFrame = 0;
+function scheduleZone() {
+  if (zoneFrame || !studio) return;
+  zoneFrame = requestAnimationFrame(() => { zoneFrame = 0; studio.setZone(measureStageZone()); });
+}
+
+/* ── transport ──────────────────────────────────────────────────────────── */
+function syncSpin(on) {
+  ui.spin.setAttribute('aria-pressed', String(on));
+  ui.spin.classList.toggle('is-spin', on);
+  ui.spin.setAttribute('aria-label', on ? 'Pause auto-rotation' : 'Resume auto-rotation');
+}
+let backdropX = 0, backdropY = 0;
+function setBackdropParallax(x, y) {
+  if (Math.abs(x - backdropX) < 0.004 && Math.abs(y - backdropY) < 0.004) return;
+  backdropX = x;
+  backdropY = y;
+  ui.backdrop.style.setProperty('--mx', x.toFixed(3));
+  ui.backdrop.style.setProperty('--my', y.toFixed(3));
+}
+
+/* ── price + pre-order ──────────────────────────────────────────────────── */
+function writePrice(value) {
+  const cents = Math.round(value * 100);
+  ui.priceVal.textContent = String(Math.floor(cents / 100));
+  ui.priceCents.textContent = `.${String(cents % 100).padStart(2, '0')}`;
+}
+function countPrice(target) {
+  if (prefersReducedMotion()) { writePrice(target); return; }
+  const t0 = performance.now(), ms = 1500;
+  const frame = (now) => {
+    const k = clamp((now - t0) / ms, 0, 1);
+    writePrice(target * (1 - Math.pow(1 - k, 4)));
+    if (k < 1) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+function selectedSize() {
+  const btn = ui.sizes.find((b) => b.getAttribute('aria-pressed') === 'true');
+  return btn ? btn.textContent.trim() : '42';
+}
+function renderReservation() {
+  const r = reservation;
+  ui.preorder.classList.toggle('is-done', !!r);
+  ui.preorderLabel.textContent = r ? `Reserved · EU ${r.size}` : 'Pre-Order Now';
+  if (r) ui.preorder.setAttribute('aria-label', `Reserved: ${r.colorway}, EU ${r.size}. Activate to manage your reservation.`);
+  else ui.preorder.removeAttribute('aria-label');
+  ui.stockNum.textContent = String(r ? PRODUCT.stock - 1 : PRODUCT.stock);
+}
+function releaseReservation() {
+  reservation = null;
+  storage.set(STORE_KEY, null);
+  renderReservation();
+  toast('Reservation released — the pair is back in the drop.');
+}
+async function onPreorder() {
+  if (ui.preorder.classList.contains('is-busy')) return;
+  if (reservation) {
+    toast(`Pair № ${pad4(reservation.pair)} is held on this device · ${reservation.colorway} · EU ${reservation.size}`,
+      { icon: 'check', duration: 6000, action: { label: 'Release', run: releaseReservation } });
+    return;
+  }
+  ui.preorder.classList.add('is-busy');
+  ui.preorder.setAttribute('aria-busy', 'true');
+  await sleep(prefersReducedMotion() ? 150 : 900);
+  reservation = {
+    pair: PRODUCT.stock,
+    size: selectedSize(),
+    colorway: colorways[activeColorway].label,
+    reservedAt: new Date().toISOString(),
+  };
+  storage.set(STORE_KEY, reservation);
+  ui.preorder.classList.remove('is-busy');
+  ui.preorder.removeAttribute('aria-busy');
+  renderReservation();
+  studio.celebrate();
+  toast(`Reserved — ${reservation.colorway} · EU ${reservation.size} · pair № ${pad4(reservation.pair)} of ${PRODUCT.edition}`,
+    { icon: 'check', duration: 6500, action: { label: 'Undo', run: releaseReservation } });
+}
+
+/** Magnetic pull + cursor-tracked glow for the primary CTA (CSS consumes the vars). */
+function magnetize(button) {
+  button.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse' || prefersReducedMotion()) return;
+    const r = button.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    button.style.setProperty('--mx', `${((x - 0.5) * 10).toFixed(1)}px`);
+    button.style.setProperty('--my', `${((y - 0.5) * 8).toFixed(1)}px`);
+    button.style.setProperty('--gx', `${(x * 100).toFixed(1)}%`);
+    button.style.setProperty('--gy', `${(y * 100).toFixed(1)}%`);
+  });
+  button.addEventListener('pointerleave', () => {
+    button.style.setProperty('--mx', '0px');
+    button.style.setProperty('--my', '0px');
+  });
+}
+
+/* ── keyboard ───────────────────────────────────────────────────────────── */
+function onKey(e) {
+  if (!studio || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  if (t && t.closest && t.closest('[role="tablist"]') && /^(ArrowLeft|ArrowRight|Home|End)$/.test(e.key)) return;
+  const n = Number(e.key);
+  if (Number.isInteger(n) && n >= 1 && n <= colorways.length) { selectColorway(n - 1); e.preventDefault(); return; }
+  switch (e.key) {
+    case 'ArrowLeft':  studio.nudge(-0.45); break;
+    case 'ArrowRight': studio.nudge(0.45); break;
+    case 'ArrowUp':    studio.orbit(0.07); break;
+    case 'ArrowDown':  studio.orbit(-0.07); break;
+    case '+': case '=': studio.zoomBy(1.12); break;
+    case '-': case '_': studio.zoomBy(1 / 1.12); break;
+    case '0': studio.reset(); break;
+    case 'r': case 'R': studio.setAuto(!studio.auto); break;
+    case 'Escape':
+      if (document.body.dataset.view === 'overview') return;
+      setView('overview');
+      break;
+    default: return;
+  }
+  e.preventDefault();
+}
+
+function wireInterface() {
+  ui.tabs.forEach((tab) => tab.addEventListener('click', () => setView(tab.dataset.viewTarget)));
+  ui.tablist.addEventListener('keydown', (e) => {
+    const i = ui.tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const next = { ArrowRight: (i + 1) % ui.tabs.length, ArrowLeft: (i - 1 + ui.tabs.length) % ui.tabs.length,
+                   Home: 0, End: ui.tabs.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    setView(ui.tabs[next].dataset.viewTarget, { focusTab: true });
+  });
+  ui.tech.addEventListener('click', () => setView(document.body.dataset.view === 'tech' ? 'overview' : 'tech'));
+  ui.spin.addEventListener('click', () => studio.setAuto(!studio.auto));
+  ui.reset.addEventListener('click', () => studio.reset());
+  ui.zoomIn.addEventListener('click', () => studio.zoomBy(1.15));
+  ui.zoomOut.addEventListener('click', () => studio.zoomBy(1 / 1.15));
+  ui.colorways.addEventListener('click', (e) => {
+    const btn = e.target.closest('.sw');
+    if (btn) selectColorway(Number(btn.dataset.index));
+  });
+  ui.sizes.forEach((btn) => btn.addEventListener('click', () => {
+    ui.sizes.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+  }));
+  ui.preorder.addEventListener('click', onPreorder);
+  magnetize(ui.preorder);
+  window.addEventListener('keydown', onKey);
+  // On tablets/phones the tech sheet floats over the stage; touching the stage dismisses it.
+  ui.canvas.addEventListener('pointerdown', () => {
+    if (narrowQuery.matches && document.body.dataset.view === 'tech') setView('overview');
+  });
+  window.matchMedia('(prefers-reduced-motion: reduce)')
+    .addEventListener('change', (e) => studio.setReducedMotion(e.matches));
+  window.addEventListener('resize', () => { moveThumb(); scheduleZone(); });
+  const layoutObserver = new ResizeObserver(scheduleZone);
+  [ui.topbar, ui.hero, ui.rail, ui.dock].forEach((el) => layoutObserver.observe(el));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { moveThumb(); scheduleZone(); });
+  // Free the GPU context promptly on real navigations (kept alive for back/forward cache).
+  window.addEventListener('pagehide', (e) => { if (!e.persisted) studio.dispose(); });
+}
+
+/* ── boot ───────────────────────────────────────────────────────────────── */
+async function boot() {
+  window.__aeroBooted = true;
+  clearTimeout(window.__aeroWatchdog);
+  setView('overview');
+  syncSpin(!prefersReducedMotion());
+  setProgress(0.03, 'Initialising renderer');
+
+  try {
+    studio = createStudio(ui.canvas, {
+      progress: setProgress,
+      auto: syncSpin,
+      parallax: setBackdropParallax,
+      reduceFx: (on) => {
+        document.body.classList.toggle('reduce-fx', on);
+        if (on) toast('Visual effects reduced to keep the motion smooth on this device.', { icon: 'bolt' });
+      },
+      contextlost: () => toast('Graphics context lost — waiting for the GPU to recover…', { duration: 6000 }),
+      contextrestored: () => toast('Graphics restored.', { icon: 'check' }),
+    });
+  } catch (error) {
+    console.error('[AERO GLIDE] WebGL initialisation failed', error);
+    showFatal('WebGL unavailable',
+      'This showcase renders the product in real time with WebGL 2. Enable hardware acceleration or use a current version of Chrome, Edge, Firefox or Safari.');
+    return;
+  }
+
+  wireInterface();
+  reservation = storage.get(STORE_KEY);
+  renderReservation();
+
+  setProgress(0.05, `Fetching ${CONFIG.modelUrl}`);
+  const result = await studio.load(CONFIG.modelUrl);
+  colorways = result.colorways;
+  activeColorway = 0;
+  const lighting = result.mode === 'lighting';
+  ui.dockLabel.textContent = lighting ? 'Studio light' : 'Colorway';
+  ui.colorways.setAttribute('aria-label', lighting ? 'Select studio lighting' : 'Select colorway');
+  renderColorways();
+  applyTheme(colorways[0]);
+  await studio.setColorway(0, { instant: true });
+
+  setProgress(0.92, 'Compiling shaders');
+  studio.setZone(measureStageZone());
+  await studio.prepare();
+  setProgress(1, 'Ready');
+  await sleep(240);
+
+  ui.loader.classList.add('is-hidden');
+  ui.loader.setAttribute('aria-hidden', 'true');
+  document.body.classList.add('is-ready');
+  studio.start();
+  countPrice(PRODUCT.price);
+  setTimeout(scheduleZone, 1150);                     // re-measure once the reveal transitions settle
+
+  if (result.source === 'procedural') {
+    console.warn(`[AERO GLIDE] ${CONFIG.modelUrl} could not be loaded — procedural model shown instead.`, result.error);
+    const code = /HTTP (\d{3})/.exec((result.error && result.error.message) || '');
+    const reason = location.protocol === 'file:' ? 'the page was opened from disk — serve it over HTTP'
+                 : code ? `HTTP ${code[1]}` : 'network or format error';
+    toast(`${CONFIG.modelUrl} not loaded (${reason}). Showing the procedural studio model.`, { duration: 8000 });
+  } else {
+    let hinted = true;
+    try { hinted = sessionStorage.getItem('aeroglide:hinted') === '1'; sessionStorage.setItem('aeroglide:hinted', '1'); }
+    catch { hinted = false; }
+    if (!hinted) {
+      const hint = isFinePointer()
+        ? `Drag to rotate · scroll to zoom · keys 1–${colorways.length} switch ${lighting ? 'lighting' : 'colorways'}`
+        : 'Drag to rotate · pinch to zoom · double-tap to reset';
+      setTimeout(() => toast(hint, { icon: 'hand', duration: 5200 }), 2400);
+    }
+  }
+}
+
+boot().catch((error) => {
+  console.error('[AERO GLIDE] boot failed', error);
+  showFatal('Something went wrong', `The showcase could not start: ${error && error.message ? error.message : error}`);
+});
+</script>
+</body>
+</html>
